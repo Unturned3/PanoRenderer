@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <cassert>
+#include <exception>
 
 typedef unsigned int uint;
 
@@ -25,14 +25,13 @@ void log(Args && ...args)
     (std::cout << ... << args) << std::endl;
 }
 
-std::string read_shader_src(std::string path) {
+std::string read_file(const std::string& path) {
     std::ifstream f{path};
-    assert(!f.fail());
+    if (f.fail())
+        throw std::runtime_error("Failed to read file " + path);
     std::stringstream ss;
     ss << f.rdbuf();
-    std::string s { ss.str() };
-    assert(s.length() > 0);
-    return s;
+    return ss.str();
 }
 
 

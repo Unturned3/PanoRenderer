@@ -40,7 +40,7 @@ int main() {
         return -1;
     }
 
-    std::cout << glGetString(GL_VERSION) << std::endl;
+    LOG("OpenGL version: ", glGetString(GL_VERSION));
 
     uint VAO;
     glGenVertexArrays(1, &VAO); 
@@ -59,8 +59,8 @@ int main() {
     glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
 
     uint shader = createShader(
-        utils::read_shader_src("../shaders/vertex.glsl"),
-        utils::read_shader_src("../shaders/frag.glsl")
+        "../shaders/vertex.glsl",
+        "../shaders/frag.glsl"
     );
     glUseProgram(shader);
 
