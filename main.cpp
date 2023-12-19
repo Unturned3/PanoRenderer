@@ -1,19 +1,29 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
 #include <algorithm>
 #include <iostream>
 #include <string>
-
 #include "utils.h"
 #include "shader_tools.h"
+
+void glErrorCallback_(GLenum source, GLenum type, GLuint id, GLenum severity,
+                      GLsizei length, const GLchar *msg, const void *userParam) {
+    LOG("OpenGL error:");
+    LOG(msg);
+}
+
+void glfwErrorCallback_(int err, const char *msg) {
+    LOG("GLFW error code: ", err);
+    LOG(msg);
+}
 
 int main() {
     GLFWwindow *window;  // created window
 
+    glfwSetErrorCallback(glfwErrorCallback_);
     if (glfwInit() == 0) {
-        std::cerr << "GLFW failed to initiate." << std::endl;
+        std::cerr << "GLFW failed to initialize!" << std::endl;
         return -1;
     }
 
@@ -26,16 +36,16 @@ int main() {
 
     window = glfwCreateWindow(640, 480, "GLFW", nullptr, nullptr);
 
-    // check if window was created successfully
+    // Check if window was created successfully
     if (window == nullptr) {
-        std::cerr << "GLFW failed to create window." << std::endl;
+        std::cerr << "GLFW failed to create window!" << std::endl;
         return -1;
     }
 
     glfwMakeContextCurrent(window);
 
     if (glewInit() != GLEW_OK) {
-        std::cerr << "GLFW failed to create window." << std::endl;
+        std::cerr << "GLEW init failed!" << std::endl;
         glfwTerminate();
         return -1;
     }
@@ -46,7 +56,6 @@ int main() {
     glGenVertexArrays(1, &VAO); 
     glBindVertexArray(VAO);
 
-    // Vertex data and buffer
     float pos[] = {
         -0.5f, -0.5f,
         0.5f, -0.5f,
@@ -58,7 +67,13 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
 
-    uint shader = createShader(
+    if (GLEW_KHR_debug) {
+        glDebugMessageCallback(glErrorCallback_, nullptr);
+    } else {
+        LOG("glDebugMessageCallback not available.");
+    }
+
+    uint shader = create_shader(
         "../shaders/vertex.glsl",
         "../shaders/frag.glsl"
     );
@@ -72,6 +87,7 @@ int main() {
 
     while (glfwWindowShouldClose(window) == 0) {
         glClear(GL_COLOR_BUFFER_BIT);
+        glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glfwSwapBuffers(window);
         glfwPollEvents();

@@ -1,4 +1,5 @@
 
+#pragma once
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>
@@ -8,7 +9,7 @@
 #include <sstream>
 #include "utils.h"
 
-static uint compileShader(uint type, const std::string& path) {
+static uint compile_shader(uint type, const std::string& path) {
     const std::string& src = utils::read_file(path);
     if (src.length() <= 0)
         throw std::runtime_error("Shader file " + path + " is empty!");
@@ -30,11 +31,11 @@ static uint compileShader(uint type, const std::string& path) {
     return id;
 }
 
-uint createShader(const std::string vertShaderPath,
+uint create_shader(const std::string vertShaderPath,
                   const std::string fragShaderPath) {
     uint p = glCreateProgram();
-    uint vs = compileShader(GL_VERTEX_SHADER, vertShaderPath);
-    uint fs = compileShader(GL_FRAGMENT_SHADER, fragShaderPath);
+    uint vs = compile_shader(GL_VERTEX_SHADER, vertShaderPath);
+    uint fs = compile_shader(GL_FRAGMENT_SHADER, fragShaderPath);
 
     if (!vs || ! fs) {
         return 0;

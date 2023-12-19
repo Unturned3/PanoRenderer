@@ -12,6 +12,7 @@ set(OS_ ${CMAKE_SYSTEM_NAME})
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Wconversion")
+append(CMAKE_CXX_FLAGS "-Wno-unused-variable -Wno-unused-parameter")
 set(WERROR off)
 
 add_executable(main main.cpp)
