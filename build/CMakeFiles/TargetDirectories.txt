@@ -1,3 +1,0 @@
-/Users/richard/Documents/Richard/School/University/_ICL/_yr3/proj-60010/OpenGL/build/CMakeFiles/main.dir
-/Users/richard/Documents/Richard/School/University/_ICL/_yr3/proj-60010/OpenGL/build/CMakeFiles/edit_cache.dir
-/Users/richard/Documents/Richard/School/University/_ICL/_yr3/proj-60010/OpenGL/build/CMakeFiles/rebuild_cache.dir
