@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <iostream>
+#include <cmath>
 #include <string>
 #include "utils.h"
 #include "shader_tools.h"
@@ -53,6 +54,10 @@ int main() {
 
     LOG("OpenGL version: ", glGetString(GL_VERSION));
 
+    int maxVertAttribs;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxVertAttribs);
+    LOG("Maximum number of vertex attributes: ", maxVertAttribs);
+
     uint VAO;
     glGenVertexArrays(1, &VAO); 
     glBindVertexArray(VAO);
@@ -102,13 +107,17 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    // Don't fill (i.e. draw a wireframe)
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     while (glfwWindowShouldClose(window) == 0) {
+
+        float t = static_cast<float>(glfwGetTime());
+        float g = std::sin(t) / 2.0f + 0.5f;
+        int l = glGetUniformLocation(shader, "ourColor");
+        glUniform4f(l, 0.0, g, 0.0, 1.0);
+
         glClear(GL_COLOR_BUFFER_BIT);
+
         glBindVertexArray(VAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glfwSwapBuffers(window);
         glfwPollEvents();
