@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <iostream>
+#include <vector>
 #include <cmath>
 #include <string>
 #include "utils.h"
@@ -52,6 +53,12 @@ int main() {
         return -1;
     }
 
+    if (GLEW_KHR_debug) {
+        glDebugMessageCallback(glErrorCallback_, nullptr);
+    } else {
+        LOG("glDebugMessageCallback not available.");
+    }
+
     LOG("OpenGL version: ", glGetString(GL_VERSION));
 
     int maxVertAttribs;
@@ -62,12 +69,13 @@ int main() {
     glGenVertexArrays(1, &VAO); 
     glBindVertexArray(VAO);
 
-    // Four corners of a square.
-    float pos[] = {
-        0.5, 0.5,
-        -0.5, 0.5,
-        -0.5, -0.5,
-        0.5, -0.5,
+    // Column 1,2: x,y coords of the points of a rectangle
+    // Column 3,4,5: RGB colors of the corresponding points
+    float vertices[] = {
+         0.5f,  0.5f,  1.0f,  0.0f,  0.5f,  // upper right
+        -0.5f,  0.5f,  1.0f,  0.6f,  0.0f,  // upper left
+        -0.5f, -0.5f,  0.0f,  0.9f,  0.5f,  // lower left
+         0.5f, -0.5f,  0.5f,  0.0f,  1.0f,  // lower right
     };
 
     uint idx[] = {
@@ -76,15 +84,9 @@ int main() {
     };
 
     uint VBO;
-    glGenBuffers(1, &VBO);  
+    glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
-
-    if (GLEW_KHR_debug) {
-        glDebugMessageCallback(glErrorCallback_, nullptr);
-    } else {
-        LOG("glDebugMessageCallback not available.");
-    }
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     uint shader = create_shader(
         "../shaders/vertex.glsl",
@@ -94,7 +96,11 @@ int main() {
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
-                          2*sizeof(float), (const void*)0);
+                          5*sizeof(float), (void*)0);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+                          5*sizeof(float), (void*)(2*sizeof(float)));
     
     uint EBO;
     glGenBuffers(1, &EBO);
@@ -106,14 +112,15 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
     while (glfwWindowShouldClose(window) == 0) {
 
         float t = static_cast<float>(glfwGetTime());
-        float g = std::sin(t) / 2.0f + 0.5f;
-        int l = glGetUniformLocation(shader, "ourColor");
-        glUniform4f(l, 0.0, g, 0.0, 1.0);
+        float c = std::sin(t) / 2.0f + 0.5f;
+        int l = glGetUniformLocation(shader, "tColor");
+        glUniform1f(l, c);
 
         glClear(GL_COLOR_BUFFER_BIT);
 

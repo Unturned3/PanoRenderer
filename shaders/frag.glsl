@@ -1,10 +1,12 @@
 
 #version 330 core
 
-layout(location = 0) out vec4 color;
-
-uniform vec4 ourColor;
+in vec3 vColor;
+out vec4 fragColor;
+uniform float tColor;
 
 void main() {
-    color = ourColor;
+    fragColor = vec4(vColor, 1.0);
+    fragColor.g += tColor;
+    fragColor = clamp(fragColor, 0, 1);
 }
