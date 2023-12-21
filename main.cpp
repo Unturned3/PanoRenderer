@@ -7,7 +7,7 @@
 #include <cmath>
 #include <string>
 #include "utils.h"
-#include "shader_tools.h"
+#include "shader.h"
 
 void glErrorCallback_(GLenum source, GLenum type, GLuint id, GLenum severity,
                       GLsizei length, const GLchar *msg, const void *userParam) {
@@ -59,11 +59,26 @@ int main() {
         LOG("glDebugMessageCallback not available.");
     }
 
-    LOG("OpenGL version: ", glGetString(GL_VERSION));
 
-    int maxVertAttribs;
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxVertAttribs);
-    LOG("Maximum number of vertex attributes: ", maxVertAttribs);
+    {
+        LOG("OpenGL version: ", glGetString(GL_VERSION));
+
+        int maxVertAtrbs;
+        glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxVertAtrbs);
+        LOG("Max number of vertex attributes: ", maxVertAtrbs);
+
+        int maxTexSize;
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
+        LOG("Max texture size: ", maxTexSize);
+
+        int max3DTexSize;
+        glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &max3DTexSize);
+        LOG("Max 3D texture size: ", max3DTexSize);
+
+        int maxRectTexSize;
+        glGetIntegerv(GL_MAX_RECTANGLE_TEXTURE_SIZE, &maxRectTexSize);
+        LOG("Max rectangular texture size: ", maxRectTexSize);
+    }
 
     uint VAO;
     glGenVertexArrays(1, &VAO); 
@@ -88,11 +103,8 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    uint shader = create_shader(
-        "../shaders/vertex.glsl",
-        "../shaders/frag.glsl"
-    );
-    glUseProgram(shader);
+    Shader shader("../shaders/vertex.glsl", "../shaders/frag.glsl");
+    shader.use();
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
@@ -119,8 +131,7 @@ int main() {
 
         float t = static_cast<float>(glfwGetTime());
         float c = std::sin(t) / 2.0f + 0.5f;
-        int l = glGetUniformLocation(shader, "tColor");
-        glUniform1f(l, c);
+        shader.setFloat("tColor", c);
 
         glClear(GL_COLOR_BUFFER_BIT);
 

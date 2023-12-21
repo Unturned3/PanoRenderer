@@ -9,6 +9,39 @@
 #include <sstream>
 #include "utils.h"
 
+static uint compile_shader(uint type, const std::string& path);
+
+uint create_shader(const std::string vertShaderPath,
+                   const std::string fragShaderPath);
+
+class Shader {
+public:
+    Shader(const std::string& vertShaderPath,
+           const std::string& fragShaderPath) {
+        id_ = create_shader(vertShaderPath, fragShaderPath);
+    }
+    void use() const {
+        glUseProgram(id_);
+    }
+    void setBool(const std::string& name, bool val) {
+        glUniform1i(getULoc(name), static_cast<int>(val));
+    }
+    void setInt(const std::string& name, int val) {
+        glUniform1i(getULoc(name), val);
+    }
+    void setFloat(const std::string& name, float val) {
+        glUniform1f(getULoc(name), val);
+    }
+    const uint &id() const {
+        return id_;
+    }
+private:
+    uint id_;
+    int getULoc(const std::string& name) const {
+        return glGetUniformLocation(id_, name.c_str());
+    }
+};
+
 static uint compile_shader(uint type, const std::string& path) {
     const std::string& src = utils::read_file(path);
     if (src.length() <= 0)
@@ -32,7 +65,7 @@ static uint compile_shader(uint type, const std::string& path) {
 }
 
 uint create_shader(const std::string vertShaderPath,
-                  const std::string fragShaderPath) {
+                   const std::string fragShaderPath) {
     uint p = glCreateProgram();
     uint vs = compile_shader(GL_VERTEX_SHADER, vertShaderPath);
     uint fs = compile_shader(GL_FRAGMENT_SHADER, fragShaderPath);
