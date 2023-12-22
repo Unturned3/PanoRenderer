@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Wconversion")
 append(CMAKE_CXX_FLAGS "-Wno-unused-variable -Wno-unused-parameter")
 set(WERROR off)
 
-add_executable(main main.cpp)
+add_executable(main main.cpp stb_image.c)
 
 #if(${OS_} STREQUAL Linux)
     set(OpenGL_GL_PREFERENCE GLVND)

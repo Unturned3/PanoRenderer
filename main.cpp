@@ -6,8 +6,12 @@
 #include <vector>
 #include <cmath>
 #include <string>
+#include <cstdint>
+#include <cassert>
 #include "utils.h"
 #include "shader.h"
+
+#include "stb_image.h"
 
 void glErrorCallback_(GLenum source, GLenum type, GLuint id, GLenum severity,
                       GLsizei length, const GLchar *msg, const void *userParam) {
@@ -32,12 +36,14 @@ int main() {
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+
     // OSX only?
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    window = glfwCreateWindow(640, 480, "GLFW", nullptr, nullptr);
+    window = glfwCreateWindow(1024, 512, "GLFW", nullptr, nullptr);
 
     // Check if window was created successfully
     if (window == nullptr) {
@@ -59,7 +65,6 @@ int main() {
         LOG("glDebugMessageCallback not available.");
     }
 
-
     {
         LOG("OpenGL version: ", glGetString(GL_VERSION));
 
@@ -80,17 +85,42 @@ int main() {
         LOG("Max rectangular texture size: ", maxRectTexSize);
     }
 
+    int width, height, channels;
+    stbi_set_flip_vertically_on_load(true);
+    uint8_t *img = stbi_load("../images/pano-1024.jpg",
+                             &width, &height, &channels, 0);
+    if (!img) {
+        throw std::runtime_error("stbi_load() failed!");
+    }
+    assert(channels == 3);
+
+    uint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
+                 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(img);
+
     uint VAO;
     glGenVertexArrays(1, &VAO); 
     glBindVertexArray(VAO);
 
     // Column 1,2: x,y coords of the points of a rectangle
     // Column 3,4,5: RGB colors of the corresponding points
-    float vertices[] = {
-         0.5f,  0.5f,  1.0f,  0.0f,  0.5f,  // upper right
-        -0.5f,  0.5f,  1.0f,  0.6f,  0.0f,  // upper left
-        -0.5f, -0.5f,  0.0f,  0.9f,  0.5f,  // lower left
-         0.5f, -0.5f,  0.5f,  0.0f,  1.0f,  // lower right
+    // Column 6,7: texture coordinates
+    constexpr int stride = 7;
+    float vertices[stride * 4] = {
+        // top right
+         1.0f,  1.0f,  1.0f,  0.0f,  0.5f, 1.0f, 1.0f,
+        // top left
+        -1.0f,  1.5f,  1.0f,  0.6f,  0.0f, 0.0f, 1.0f,
+        // bottom left
+        -1.0f, -1.0f,  0.0f,  0.9f,  0.5f, 0.0f, 0.0f,
+        // bottom right
+         1.0f, -1.0f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f,
     };
 
     uint idx[] = {
@@ -108,11 +138,15 @@ int main() {
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
-                          5*sizeof(float), (void*)0);
+                          stride*sizeof(float), (void*)0);
 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-                          5*sizeof(float), (void*)(2*sizeof(float)));
+                          stride*sizeof(float), (void*)(2*sizeof(float)));
+
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,
+                          stride*sizeof(float), (void*)(5*sizeof(float)));
     
     uint EBO;
     glGenBuffers(1, &EBO);
@@ -135,7 +169,9 @@ int main() {
 
         glClear(GL_COLOR_BUFFER_BIT);
 
+        glBindTexture(GL_TEXTURE_2D, tex);
         glBindVertexArray(VAO);
+
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glfwSwapBuffers(window);
         glfwPollEvents();
