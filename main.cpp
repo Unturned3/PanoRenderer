@@ -1,6 +1,9 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
 #include <iostream>
 #include <vector>
@@ -12,6 +15,7 @@
 #include "shader.h"
 
 #include "stb_image.h"
+#include "stb_image_write.h"
 
 void glErrorCallback_(GLenum source, GLenum type, GLuint id, GLenum severity,
                       GLsizei length, const GLchar *msg, const void *userParam) {
@@ -25,6 +29,22 @@ void glfwErrorCallback_(int err, const char *msg) {
 }
 
 int main() {
+
+    /*
+    if (!GLEW_NV_vdpau_interop)
+        LOG("NV_vdpau_interop unavailable!");
+    if (!GLEW_NV_vdpau_interop2)
+        LOG("NV_vdpau_interop2 unavailable!");
+
+    glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
+    vec = trans * vec;
+    std::cout << vec.x << vec.y << vec.z << std::endl;
+
+    return 0;
+    */
+
     GLFWwindow *window;  // created window
 
     glfwSetErrorCallback(glfwErrorCallback_);
@@ -34,6 +54,7 @@ int main() {
     }
 
     glfwDefaultWindowHints();
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
@@ -161,7 +182,7 @@ int main() {
     //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
-    while (glfwWindowShouldClose(window) == 0) {
+    //while (glfwWindowShouldClose(window) == 0) {
 
         float t = static_cast<float>(glfwGetTime());
         float c = std::sin(t) / 2.0f + 0.5f;
@@ -173,9 +194,26 @@ int main() {
         glBindVertexArray(VAO);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        /*
         glfwSwapBuffers(window);
+        glfwSwapBuffers(window);
+        */
         glfwPollEvents();
-    }
+    //}
+
+
+    int w, h;
+    glfwGetFramebufferSize(window, &w, &h);
+    LOG("WH: ", w, " ", h);
+
+    uint8_t *imgOut = new uint8_t[static_cast<unsigned long>(w*h*3)];
+    assert(imgOut);
+
+    //glReadBuffer(GL_BACK);
+    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, imgOut);
+    stbi_flip_vertically_on_write(true);
+    stbi_write_jpg("out.jpg", w, h, 3, imgOut, 90);
+    delete[] imgOut;
 
     glfwTerminate();
     return 0;

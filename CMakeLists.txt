@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Wconversion")
 append(CMAKE_CXX_FLAGS "-Wno-unused-variable -Wno-unused-parameter")
 set(WERROR off)
 
-add_executable(main main.cpp stb_image.c)
+add_executable(main main.cpp stb_image.c stb_image_write.c)
 
 #if(${OS_} STREQUAL Linux)
     set(OpenGL_GL_PREFERENCE GLVND)
@@ -28,6 +28,13 @@ target_link_libraries(main GLEW::glew)
 
 find_package(glfw3 3.3 REQUIRED)
 target_link_libraries(main glfw)
+
+find_package(glm REQUIRED)
+if(${OS_} STREQUAL Darwin)
+	target_link_libraries(main glm::glm)
+else()
+	target_link_libraries(main glm)
+endif()
 
 if(WERROR)
     append(CMAKE_CXX_FLAGS "-Werror")
