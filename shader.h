@@ -2,6 +2,8 @@
 #pragma once
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -31,6 +33,9 @@ public:
     }
     void setFloat(const std::string& name, float val) {
         glUniform1f(getULoc(name), val);
+    }
+    void setMat4(const std::string& name, const glm::mat4& m) {
+        glUniformMatrix4fv(getULoc(name), 1, GL_FALSE, glm::value_ptr(m));
     }
     const uint &id() const {
         return id_;

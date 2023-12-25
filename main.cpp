@@ -35,14 +35,6 @@ int main() {
         LOG("NV_vdpau_interop unavailable!");
     if (!GLEW_NV_vdpau_interop2)
         LOG("NV_vdpau_interop2 unavailable!");
-
-    glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
-    vec = trans * vec;
-    std::cout << vec.x << vec.y << vec.z << std::endl;
-
-    return 0;
     */
 
     GLFWwindow *window;  // created window
@@ -54,7 +46,7 @@ int main() {
     }
 
     glfwDefaultWindowHints();
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    //glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
@@ -135,13 +127,13 @@ int main() {
     constexpr int stride = 7;
     float vertices[stride * 4] = {
         // top right
-         1.0f,  1.0f,  1.0f,  0.0f,  0.5f, 1.0f, 1.0f,
+         0.5f,  0.5f,  1.0f,  0.0f,  0.5f, 1.0f, 1.0f,
         // top left
-        -1.0f,  1.5f,  1.0f,  0.6f,  0.0f, 0.0f, 1.0f,
+        -0.5f,  0.5f,  1.0f,  0.6f,  0.0f, 0.0f, 1.0f,
         // bottom left
-        -1.0f, -1.0f,  0.0f,  0.9f,  0.5f, 0.0f, 0.0f,
+        -0.5f, -0.5f,  0.0f,  0.9f,  0.5f, 0.0f, 0.0f,
         // bottom right
-         1.0f, -1.0f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f,
     };
 
     uint idx[] = {
@@ -182,7 +174,12 @@ int main() {
     //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
-    //while (glfwWindowShouldClose(window) == 0) {
+    glm::mat4 trans = glm::mat4(1);
+    trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(0,0,1));
+    trans = glm::scale(trans, glm::vec3(1.5, 1.5, 1.5));  
+    shader.setMat4("transform", trans);
+
+    while (glfwWindowShouldClose(window) == 0) {
 
         float t = static_cast<float>(glfwGetTime());
         float c = std::sin(t) / 2.0f + 0.5f;
@@ -194,12 +191,9 @@ int main() {
         glBindVertexArray(VAO);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        /*
         glfwSwapBuffers(window);
-        glfwSwapBuffers(window);
-        */
         glfwPollEvents();
-    //}
+    }
 
 
     int w, h;
