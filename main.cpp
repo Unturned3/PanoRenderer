@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <algorithm>
 #include <iostream>
 #include <vector>
@@ -121,19 +122,19 @@ int main() {
     glGenVertexArrays(1, &VAO); 
     glBindVertexArray(VAO);
 
-    // Column 1,2: x,y coords of the points of a rectangle
-    // Column 3,4,5: RGB colors of the corresponding points
-    // Column 6,7: texture coordinates
-    constexpr int stride = 7;
+    // Column 1,2,3: x,y coords of the points of a rectangle
+    // Column 4,5,6: RGB colors of the corresponding points
+    // Column 7,8: texture coordinates
+    constexpr int stride = 8;
     float vertices[stride * 4] = {
         // top right
-         0.5f,  0.5f,  1.0f,  0.0f,  0.5f, 1.0f, 1.0f,
+         0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.5f, 1.0f, 1.0f,
         // top left
-        -0.5f,  0.5f,  1.0f,  0.6f,  0.0f, 0.0f, 1.0f,
+        -0.5f,  0.5f,  0.0f,  1.0f,  0.6f,  0.0f, 0.0f, 1.0f,
         // bottom left
-        -0.5f, -0.5f,  0.0f,  0.9f,  0.5f, 0.0f, 0.0f,
+        -0.5f, -0.5f,  0.0f,  0.0f,  0.9f,  0.5f, 0.0f, 0.0f,
         // bottom right
-         0.5f, -0.5f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f,
+         0.5f, -0.5f,  0.0f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f,
     };
 
     uint idx[] = {
@@ -150,16 +151,16 @@ int main() {
     shader.use();
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
                           stride*sizeof(float), (void*)0);
 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-                          stride*sizeof(float), (void*)(2*sizeof(float)));
+                          stride*sizeof(float), (void*)(3*sizeof(float)));
 
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,
-                          stride*sizeof(float), (void*)(5*sizeof(float)));
+                          stride*sizeof(float), (void*)(6*sizeof(float)));
     
     uint EBO;
     glGenBuffers(1, &EBO);
@@ -174,10 +175,15 @@ int main() {
     //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
-    glm::mat4 trans = glm::mat4(1);
-    trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(0,0,1));
-    trans = glm::scale(trans, glm::vec3(1.5, 1.5, 1.5));  
-    shader.setMat4("transform", trans);
+    glm::mat4 M_model = glm::rotate(glm::mat4(1.0f), glm::radians(-55.0f),
+                                    glm::vec3(1.0f, 0.0f, 0.0f)); 
+    glm::mat4 M_view = glm::translate(glm::mat4(1.0f),
+                                      glm::vec3(0.0f, 0.0f, -2.0f)); 
+    glm::mat4 M_proj = glm::perspective(glm::radians(45.0f),
+                                        (float)width/float(height),
+                                        0.5f, 100.0f);
+
+    shader.setMat4("transform", M_proj * M_view * M_model);
 
     while (glfwWindowShouldClose(window) == 0) {
 
