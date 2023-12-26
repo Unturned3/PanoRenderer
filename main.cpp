@@ -12,6 +12,7 @@
 #include <string>
 #include <cstdint>
 #include <cassert>
+#include <memory>
 
 #include "utils.hpp"
 #include "Shader.hpp"
@@ -206,14 +207,13 @@ int main() {
     glfwGetFramebufferSize(window, &w, &h);
     LOG("WH: ", w, " ", h);
 
-    uint8_t *imgOut = new uint8_t[static_cast<unsigned long>(w*h*3)];
-    assert(imgOut);
+    auto imgOut = std::make_unique<uint8_t[]>(static_cast<size_t>(w*h*3));
+    assert(imgOut.get());
 
     //glReadBuffer(GL_BACK);
-    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, imgOut);
+    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, imgOut.get());
     stbi_flip_vertically_on_write(true);
-    stbi_write_jpg("out.jpg", w, h, 3, imgOut, 90);
-    delete[] imgOut;
+    stbi_write_jpg("out.jpg", w, h, 3, imgOut.get(), 90);
 
     glfwTerminate();
     return 0;
