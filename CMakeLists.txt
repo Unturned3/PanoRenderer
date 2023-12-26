@@ -1,49 +1,50 @@
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.7...3.27)
 
-include(utils.cmake)
+project(OpenGL-Test VERSION 0.1
+                    DESCRIPTION "OpenGL Test"
+                    LANGUAGES C CXX)
 
-project(OpenGL-Test)
+# Include custom modules
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+include(utils)
 
 prevent_in_src_build()
 
-set(OS_ ${CMAKE_SYSTEM_NAME})
-execute_process(
-        COMMAND bash -c
-        "cat /etc/os-arelease 2> /dev/null | grep '^ID=' | cut -d'=' -f 2"
-        OUTPUT_VARIABLE DISTRO_)
-if("${DISTRO_}" STREQUAL "")
-    set(DISTRO_ n/a)
-endif()
+add_executable(main main.cpp)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Wconversion")
-append(CMAKE_CXX_FLAGS "-Wno-unused-variable -Wno-unused-parameter")
-set(WERROR off)
+set_target_properties(main PROPERTIES CXX_EXTENSIONS OFF)
+target_compile_features(main PRIVATE cxx_std_17)
+target_compile_options(main PRIVATE
+    -Wall -Wextra -Wpedantic -Wconversion
+    -Wno-unused-variable -Wno-unused-parameter
+    #-g3
+    #-Werror
+)
 
-add_executable(main main.cpp stb_image.c stb_image_write.c)
+add_subdirectory(stb_image)
+target_include_directories(main PRIVATE stb_image)
+target_link_libraries(main PRIVATE stb_image)
+
+get_os_name(OS_)
+get_linux_distro_name(DISTRO_)
 
 if(${OS_} STREQUAL Linux)
     set(OpenGL_GL_PREFERENCE GLVND)
 endif()
+
 find_package(OpenGL REQUIRED)
-target_link_libraries(main OpenGL::GL)
+target_link_libraries(main PRIVATE OpenGL::GL)
 
 find_package(GLEW REQUIRED)
-target_link_libraries(main GLEW::glew)
+target_link_libraries(main PRIVATE GLEW::glew)
 
 find_package(glfw3 3.3 REQUIRED)
-target_link_libraries(main glfw)
+target_link_libraries(main PRIVATE glfw)
 
 find_package(glm REQUIRED)
-if((${OS_} STREQUAL Linux) AND (${DISTRO_} STREQUAL arch))
-    target_link_libraries(main glm)
+if(${DISTRO_} STREQUAL arch)
+    target_link_libraries(main PRIVATE glm)
 else()
-	target_link_libraries(main glm::glm)
+	target_link_libraries(main PRIVATE glm::glm)
 endif()
-
-if(WERROR)
-    append(CMAKE_CXX_FLAGS "-Werror")
-endif()
-
