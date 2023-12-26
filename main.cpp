@@ -12,8 +12,11 @@
 #include <string>
 #include <cstdint>
 #include <cassert>
-#include "utils.h"
-#include "shader.h"
+
+#include "utils.hpp"
+#include "Shader.hpp"
+#include "VertexBuffer.hpp"
+#include "IndexBuffer.hpp"
 
 #include "stb_image.h"
 #include "stb_image_write.h"
@@ -118,10 +121,6 @@ int main() {
 
     stbi_image_free(img);
 
-    uint VAO;
-    glGenVertexArrays(1, &VAO); 
-    glBindVertexArray(VAO);
-
     // Column 1,2,3: x,y coords of the points of a rectangle
     // Column 4,5,6: RGB colors of the corresponding points
     // Column 7,8: texture coordinates
@@ -136,20 +135,21 @@ int main() {
         // bottom right
          0.5f, -0.5f,  0.0f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f,
     };
+    VertexBuffer vb(vertices, sizeof(vertices));
 
-    uint idx[] = {
+    uint indices[] = {
         0, 1, 2,    // 1st triangle
         0, 2, 3,    // 2nd triangle
     };
-
-    uint VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    IndexBuffer ib(indices, 6);
 
     Shader shader(utils::path("shaders/vertex.glsl"),
                   utils::path("shaders/frag.glsl"));
     shader.use();
+
+    uint VAO;
+    glGenVertexArrays(1, &VAO); 
+    glBindVertexArray(VAO);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
@@ -163,15 +163,15 @@ int main() {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,
                           stride*sizeof(float), (void*)(6*sizeof(float)));
 
-    uint EBO;
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(idx), idx, GL_STATIC_DRAW);
+    vb.bind();
+    ib.bind();
 
     glBindVertexArray(0);
     glDisableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+    vb.unbind();
+    ib.unbind();
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 

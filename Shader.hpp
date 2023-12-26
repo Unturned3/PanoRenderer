@@ -9,11 +9,11 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-#include "utils.h"
+#include "utils.hpp"
 
 static uint compile_shader(uint type, const std::string& path);
 
-uint create_shader(const std::string vertShaderPath,
+static uint create_shader(const std::string vertShaderPath,
                    const std::string fragShaderPath);
 
 class Shader {
@@ -25,19 +25,19 @@ public:
     void use() const {
         glUseProgram(id_);
     }
-    void setBool(const std::string& name, bool val) {
+    void setBool(const std::string& name, bool val) const {
         glUniform1i(getULoc(name), static_cast<int>(val));
     }
-    void setInt(const std::string& name, int val) {
+    void setInt(const std::string& name, int val) const {
         glUniform1i(getULoc(name), val);
     }
-    void setFloat(const std::string& name, float val) {
+    void setFloat(const std::string& name, float val) const {
         glUniform1f(getULoc(name), val);
     }
-    void setMat4(const std::string& name, const glm::mat4& m) {
+    void setMat4(const std::string& name, const glm::mat4& m) const {
         glUniformMatrix4fv(getULoc(name), 1, GL_FALSE, glm::value_ptr(m));
     }
-    const uint &id() const {
+    const uint& id() const {
         return id_;
     }
 private:
@@ -69,8 +69,8 @@ static uint compile_shader(uint type, const std::string& path) {
     return id;
 }
 
-uint create_shader(const std::string vertShaderPath,
-                   const std::string fragShaderPath) {
+static uint create_shader(const std::string vertShaderPath,
+                          const std::string fragShaderPath) {
     uint p = glCreateProgram();
     uint vs = compile_shader(GL_VERTEX_SHADER, vertShaderPath);
     uint fs = compile_shader(GL_FRAGMENT_SHADER, fragShaderPath);
