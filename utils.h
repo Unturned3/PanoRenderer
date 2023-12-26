@@ -17,6 +17,7 @@ typedef unsigned int uint;
 
 namespace utils {
 
+
 // Variadic Templates
 // https://stackoverflow.com/a/29326784
 template<typename ...Args>
@@ -25,6 +26,7 @@ void log(Args && ...args)
     (std::cout << ... << args) << std::endl;
 }
 
+
 std::string read_file(const std::string& path) {
     std::ifstream f{path};
     if (f.fail())
@@ -32,6 +34,11 @@ std::string read_file(const std::string& path) {
     std::stringstream ss;
     ss << f.rdbuf();
     return ss.str();
+}
+
+
+std::string path(const std::string& p) {
+    return root_dir / std::filesystem::path(p);
 }
 
 

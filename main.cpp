@@ -101,7 +101,7 @@ int main() {
 
     int width, height, channels;
     stbi_set_flip_vertically_on_load(true);
-    uint8_t *img = stbi_load("../images/pano-1024.jpg",
+    uint8_t *img = stbi_load(utils::path("images/pano-1024.jpg").c_str(),
                              &width, &height, &channels, 0);
     if (!img) {
         throw std::runtime_error("stbi_load() failed!");
@@ -147,7 +147,8 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    Shader shader("../shaders/vertex.glsl", "../shaders/frag.glsl");
+    Shader shader(utils::path("shaders/vertex.glsl"),
+                  utils::path("shaders/frag.glsl"));
     shader.use();
 
     glEnableVertexAttribArray(0);
