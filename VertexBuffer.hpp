@@ -14,23 +14,14 @@ public:
         glBufferData(GL_ARRAY_BUFFER, size, data, usage);
     }
 
-    ~VertexBuffer()
-    {
-        glDeleteBuffers(1, &id_);
-    }
+    ~VertexBuffer() { glDeleteBuffers(1, &id_); }
 
     VertexBuffer(const VertexBuffer& o) = delete;
     VertexBuffer& operator=(const VertexBuffer& o) = delete;
 
-    void bind() const
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, id_);
-    }
+    void bind() const { glBindBuffer(GL_ARRAY_BUFFER, id_); }
 
-    void unbind() const
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
+    void unbind() const { glBindBuffer(GL_ARRAY_BUFFER, 0); }
 
 private:
     uint id_;

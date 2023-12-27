@@ -12,31 +12,20 @@ public:
     {
         glGenBuffers(1, &id_);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id_);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(uint), data, usage);
+        glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER, count * sizeof(uint), data, usage);
     }
 
-    ~IndexBuffer()
-    {
-        glDeleteBuffers(1, &id_);
-    }
+    ~IndexBuffer() { glDeleteBuffers(1, &id_); }
 
     IndexBuffer(const IndexBuffer& o) = delete;
     IndexBuffer& operator=(const IndexBuffer& o) = delete;
 
-    void bind() const
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id_);
-    }
+    void bind() const { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id_); }
 
-    void unbind() const
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    }
+    void unbind() const { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); }
 
-    const uint& count() const
-    {
-        return count_;
-    }
+    const uint& count() const { return count_; }
 
 private:
     uint id_;

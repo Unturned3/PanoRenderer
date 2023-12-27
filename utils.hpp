@@ -1,6 +1,8 @@
 
 #pragma once
 #include "config.h"
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -19,8 +21,7 @@ namespace utils {
 
 // Variadic Templates
 // https://stackoverflow.com/a/29326784
-template <typename... Args>
-void log(Args&&... args)
+template <typename... Args> void log(Args&&... args)
 {
     (std::cout << ... << args) << std::endl;
 }
@@ -38,6 +39,30 @@ std::string read_file(const std::string& path)
 std::string path(const std::string& p)
 {
     return root_dir / std::filesystem::path(p);
+}
+
+void probe_OpenGL_properties()
+{
+    LOG("OpenGL version: ", glGetString(GL_VERSION));
+
+    LOG("NV_vdpau_interop: ", GLEW_NV_vdpau_interop);
+    LOG("NV_vdpau_interop2: ", GLEW_NV_vdpau_interop2);
+
+    int maxVertAtrbs;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxVertAtrbs);
+    LOG("Max number of vertex attributes: ", maxVertAtrbs);
+
+    int maxTexSize;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
+    LOG("Max texture size: ", maxTexSize);
+
+    int max3DTexSize;
+    glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &max3DTexSize);
+    LOG("Max 3D texture size: ", max3DTexSize);
+
+    int maxRectTexSize;
+    glGetIntegerv(GL_MAX_RECTANGLE_TEXTURE_SIZE, &maxRectTexSize);
+    LOG("Max rectangular texture size: ", maxRectTexSize);
 }
 
 } // namespace utils
