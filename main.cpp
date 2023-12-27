@@ -34,6 +34,14 @@ void glfwErrorCallback_(int err, const char *msg) {
     LOG(msg);
 }
 
+void processInput(GLFWwindow *window);
+
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+float yaw = 0.0f;
+float pitch = 0.0f;
+
 int main() {
 
     /*
@@ -147,6 +155,19 @@ int main() {
 
     vb.bind();
 
+    glm::vec3 cubePositions[] = {
+        glm::vec3( 0.0f,  0.0f,  0.0f), 
+        glm::vec3( 2.0f,  5.0f, -15.0f), 
+        glm::vec3(-1.5f, -2.2f, -2.5f),  
+        glm::vec3(-3.8f, -2.0f, -12.3f),  
+        glm::vec3( 2.4f, -0.4f, -3.5f),  
+        glm::vec3(-1.7f,  3.0f, -7.5f),  
+        glm::vec3( 1.3f, -2.0f, -2.5f),  
+        glm::vec3( 1.5f,  2.0f, -2.5f), 
+        glm::vec3( 1.5f,  0.2f, -1.5f), 
+        glm::vec3(-1.3f,  1.0f, -1.5f)  
+    };
+
     glBindVertexArray(0);
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
@@ -157,25 +178,36 @@ int main() {
     //glEnable(GL_CULL_FACE); 
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
+    glm::mat4 M_proj = glm::perspective(glm::radians(65.0f),
+                                        (float)width/float(height),
+                                        0.5f, 100.0f);
+    shader.setMat4("proj", M_proj);
+
     while (glfwWindowShouldClose(window) == 0) {
 
-        glm::mat4 M_model = glm::rotate(glm::mat4(1.0f), glm::radians(-55.0f),
-                                        glm::vec3(1.0f, 0.0f, 0.0f)); 
-        glm::mat4 M_view = glm::translate(glm::mat4(1.0f),
-                                        glm::vec3(0.0f, 0.0f, -3.0f)); 
-        glm::mat4 M_proj = glm::perspective(glm::radians(65.0f),
-                                            (float)width/float(height),
-                                            0.5f, 100.0f);
-        M_model = glm::rotate(M_model, (float)glfwGetTime()*glm::radians(10.0f),
-                              glm::vec3(0.5f, 1.0f, 0.0f));
-        shader.setMat4("transform", M_proj * M_view * M_model);
+        processInput(window);
+
+        glm::mat4 M_view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        shader.setMat4("view", M_view);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glBindTexture(GL_TEXTURE_2D, tex);
         glBindVertexArray(VAO);
 
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for(int i=0; i<10; i++) {
+
+            float angle = 20.0f * static_cast<float>(i); 
+
+            glm::mat4 M_model = glm::mat4(1.0f);
+            M_model = glm::translate(M_model, cubePositions[i]);
+            M_model = glm::rotate(M_model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+
+            shader.setMat4("model", M_model);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -195,4 +227,43 @@ int main() {
 
     glfwTerminate();
     return 0;
+}
+
+void processInput(GLFWwindow *window) {
+
+    const float cameraSpeed = 0.05f; // adjust accordingly
+    glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, cameraUp));
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos -= glm::normalize(glm::cross(cameraRight, cameraUp)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos += glm::normalize(glm::cross(cameraRight, cameraUp)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= cameraRight * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += cameraRight * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        cameraPos += cameraUp * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        cameraPos -= cameraUp * cameraSpeed;
+
+    glm::vec3 direction;
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        pitch += 1;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        pitch -= 1;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        yaw += 1;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        yaw -= 1;
+
+    if(pitch > 89.0f)
+        pitch =  89.0f;
+    if(pitch < -89.0f)
+        pitch = -89.0f;
+
+    direction.x = -sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = -cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = direction;
 }
