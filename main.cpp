@@ -18,6 +18,7 @@
 #include "Shader.hpp"
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
+#include "cube.h"
 
 #include "stb_image.h"
 #include "stb_image_write.h"
@@ -61,7 +62,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    window = glfwCreateWindow(1024, 512, "GLFW", nullptr, nullptr);
+    window = glfwCreateWindow(600, 600, "GLFW", nullptr, nullptr);
 
     // Check if window was created successfully
     if (window == nullptr) {
@@ -105,7 +106,7 @@ int main() {
 
     int width, height, channels;
     stbi_set_flip_vertically_on_load(true);
-    uint8_t *img = stbi_load(utils::path("images/pano-1024.jpg").c_str(),
+    uint8_t *img = stbi_load(utils::path("images/container.jpg").c_str(),
                              &width, &height, &channels, 0);
     if (!img) {
         throw std::runtime_error("stbi_load() failed!");
@@ -125,24 +126,8 @@ int main() {
     // Column 1,2,3: x,y coords of the points of a rectangle
     // Column 4,5,6: RGB colors of the corresponding points
     // Column 7,8: texture coordinates
-    constexpr int stride = 8;
-    float vertices[stride * 4] = {
-        // top right
-         0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.5f, 1.0f, 1.0f,
-        // top left
-        -0.5f,  0.5f,  0.0f,  1.0f,  0.6f,  0.0f, 0.0f, 1.0f,
-        // bottom left
-        -0.5f, -0.5f,  0.0f,  0.0f,  0.9f,  0.5f, 0.0f, 0.0f,
-        // bottom right
-         0.5f, -0.5f,  0.0f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f,
-    };
-    VertexBuffer vb(vertices, sizeof(vertices));
-
-    uint indices[] = {
-        0, 1, 2,    // 1st triangle
-        0, 2, 3,    // 2nd triangle
-    };
-    IndexBuffer ib(indices, 6);
+    constexpr int stride = 5;
+    VertexBuffer vb(cube_vertices, sizeof(cube_vertices));
 
     Shader shader(utils::path("shaders/vertex.glsl"),
                   utils::path("shaders/frag.glsl"));
@@ -156,48 +141,41 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
                           stride*sizeof(float), (void*)0);
 
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-                          stride*sizeof(float), (void*)(3*sizeof(float)));
-
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,
-                          stride*sizeof(float), (void*)(6*sizeof(float)));
+                          stride*sizeof(float), (void*)(3*sizeof(float)));
 
     vb.bind();
-    ib.bind();
 
     glBindVertexArray(0);
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
     vb.unbind();
-    ib.unbind();
 
+    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_CULL_FACE); 
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-
-    glm::mat4 M_model = glm::rotate(glm::mat4(1.0f), glm::radians(-55.0f),
-                                    glm::vec3(1.0f, 0.0f, 0.0f)); 
-    glm::mat4 M_view = glm::translate(glm::mat4(1.0f),
-                                      glm::vec3(0.0f, 0.0f, -2.0f)); 
-    glm::mat4 M_proj = glm::perspective(glm::radians(45.0f),
-                                        (float)width/float(height),
-                                        0.5f, 100.0f);
-
-    shader.setMat4("transform", M_proj * M_view * M_model);
 
     while (glfwWindowShouldClose(window) == 0) {
 
-        float t = static_cast<float>(glfwGetTime());
-        float c = std::sin(t) / 2.0f + 0.5f;
-        shader.setFloat("tColor", c);
+        glm::mat4 M_model = glm::rotate(glm::mat4(1.0f), glm::radians(-55.0f),
+                                        glm::vec3(1.0f, 0.0f, 0.0f)); 
+        glm::mat4 M_view = glm::translate(glm::mat4(1.0f),
+                                        glm::vec3(0.0f, 0.0f, -3.0f)); 
+        glm::mat4 M_proj = glm::perspective(glm::radians(65.0f),
+                                            (float)width/float(height),
+                                            0.5f, 100.0f);
+        M_model = glm::rotate(M_model, (float)glfwGetTime()*glm::radians(10.0f),
+                              glm::vec3(0.5f, 1.0f, 0.0f));
+        shader.setMat4("transform", M_proj * M_view * M_model);
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glBindTexture(GL_TEXTURE_2D, tex);
         glBindVertexArray(VAO);
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
