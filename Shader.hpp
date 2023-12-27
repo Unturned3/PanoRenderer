@@ -40,6 +40,11 @@ public:
         glUniform1f(getULoc(name), val);
     }
 
+    void setVec3(const std::string& name, const glm::vec3& v) const
+    {
+        glUniform3f(getULoc(name), v.x, v.y, v.z);
+    }
+
     void setMat4(const std::string& name, const glm::mat4& m) const
     {
         glUniformMatrix4fv(getULoc(name), 1, GL_FALSE, glm::value_ptr(m));

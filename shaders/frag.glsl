@@ -6,9 +6,14 @@ in vec2 vTexCoord;
 
 out vec4 fragColor;
 
-uniform float tColor;
+uniform bool useTexture;
+uniform vec3 color;
 uniform sampler2D tex;
 
 void main() {
-    fragColor = texture(tex, vTexCoord);
+    if (useTexture) {
+        fragColor = texture(tex, vTexCoord);
+    } else {
+        fragColor = vec4(color, 1.0);
+    }
 }

@@ -11,7 +11,7 @@ include(utils)
 
 prevent_in_src_build()
 
-add_executable(main main.cpp)
+add_executable(main main.cpp Sphere.cpp)
 
 set_target_properties(main PROPERTIES CXX_EXTENSIONS OFF)
 target_compile_features(main PRIVATE cxx_std_17)

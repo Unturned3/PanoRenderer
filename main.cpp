@@ -18,6 +18,7 @@
 #include "Shader.hpp"
 #include "VertexBuffer.hpp"
 #include "Window.hpp"
+#include "Sphere.hpp"
 #include "cube.h"
 #include "utils.hpp"
 
@@ -41,8 +42,8 @@ float pitch = 0.0f;
 
 int main()
 {
-
-    Window window(600, 600, "OpenGL Test");
+    const int w_w = 600, w_h = 600;
+    Window window(w_w, w_h, "OpenGL Test");
 
     if (glewInit() != GLEW_OK)
         throw std::runtime_error("GLEW init failed.");
@@ -55,7 +56,7 @@ int main()
 
     int width, height, channels;
     stbi_set_flip_vertically_on_load(true);
-    uint8_t* img = stbi_load(utils::path("images/container.jpg").c_str(),
+    uint8_t* img = stbi_load(utils::path("images/pano-1024.jpg").c_str(),
         &width, &height, &channels, 0);
     if (!img) {
         throw std::runtime_error("stbi_load() failed!");
@@ -72,15 +73,74 @@ int main()
 
     stbi_image_free(img);
 
-    // Column 1,2,3: x,y coords of the points of a rectangle
-    // Column 4,5,6: RGB colors of the corresponding points
-    // Column 7,8: texture coordinates
+    std::vector<float> vertices;
+    {
+        std::vector<glm::vec3> vs;
+        float t = 1.0f / sqrtf(2);
+        glm::vec3 a { 1,  0, -t};
+        glm::vec3 b {-1,  0, -t};
+        glm::vec3 c { 0,  1,  t};
+        glm::vec3 d { 0, -1,  t};
+
+        vs = {
+            a, c, d,
+            a, d, b,
+            a, b, c,
+            b, d, c,
+        };
+
+        for (int i = 0; i < 5; i++)
+            vs = subdivide_triangle(vs);
+        
+        for (size_t i = 0; i < vs.size(); i++) {
+            vs[i] = glm::normalize(vs[i]);
+        }
+
+        float miny = 5, maxy = -5;
+        float minp = 5, maxp = -5;
+        std::vector<glm::vec2> ts;  // texture coordinates
+        for (size_t i = 0; i < vs.size(); i++) {
+            float x = vs[i].x;
+            float y = vs[i].y;
+            float z = vs[i].z;
+
+            float _pitch = asinf(z);
+            float _yaw = asinf(y / cosf(_pitch));
+            _pitch = (_pitch + M_PI / 2) / M_PI;
+            _yaw = (_yaw + M_PI / 2) / M_PI;
+
+            miny = std::min(miny, _yaw);
+            maxy = std::max(maxy, _yaw);
+            minp = std::min(minp, _pitch);
+            maxp = std::max(maxp, _pitch);
+            ts.push_back(glm::vec2(_yaw, _pitch));
+        }
+
+        LOG(miny);
+        LOG(maxy);
+        LOG(minp);
+        LOG(maxp);
+
+        for (size_t i = 0; i < vs.size(); i++) {
+            vertices.push_back(vs[i].x);
+            vertices.push_back(vs[i].y);
+            vertices.push_back(vs[i].z);
+            vertices.push_back(ts[i].x);
+            vertices.push_back(ts[i].y);
+        }
+    }
+
+    LOG("vertices.size(): ", vertices.size());
+
     constexpr int stride = 5;
-    VertexBuffer vb(cube_vertices, sizeof(cube_vertices));
+    VertexBuffer vb(vertices.data(),
+        static_cast<uint>(vertices.size() * sizeof(float)));
 
     Shader shader(
         utils::path("shaders/vertex.glsl"), utils::path("shaders/frag.glsl"));
     shader.use();
+    shader.setBool("useTexture", false);
+    shader.setVec3("color", glm::vec3(1, 1, 1));
 
     uint VAO;
     glGenVertexArrays(1, &VAO);
@@ -90,26 +150,13 @@ int main()
     glVertexAttribPointer(
         0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)0);
 
+    /*
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride * sizeof(float),
-        (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(
+        2, 2, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(3*sizeof(float)));
+    */
 
     vb.bind();
-
-    // clang-format off
-    glm::vec3 cubePositions[] = {
-        glm::vec3( 0.0f,  0.0f,  0.0f), 
-        glm::vec3( 2.0f,  5.0f, -15.0f), 
-        glm::vec3(-1.5f, -2.2f, -2.5f),  
-        glm::vec3(-3.8f, -2.0f, -12.3f),  
-        glm::vec3( 2.4f, -0.4f, -3.5f),  
-        glm::vec3(-1.7f,  3.0f, -7.5f),  
-        glm::vec3( 1.3f, -2.0f, -2.5f),  
-        glm::vec3( 1.5f,  2.0f, -2.5f), 
-        glm::vec3( 1.5f,  0.2f, -1.5f), 
-        glm::vec3(-1.3f,  1.0f, -1.5f)  
-    };
-    // clang-format on
 
     glBindVertexArray(0);
     glDisableVertexAttribArray(0);
@@ -117,13 +164,18 @@ int main()
     glDisableVertexAttribArray(2);
     vb.unbind();
 
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
+    //glCullFace(GL_FRONT);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
     glm::mat4 M_proj = glm::perspective(
-        glm::radians(65.0f), (float)width / float(height), 0.5f, 100.0f);
+        glm::radians(65.0f), (float)w_w / (float)w_h, 0.01f, 100.0f);
     shader.setMat4("proj", M_proj);
+
+    glm::mat4 M_model = glm::mat4(1.0f);
+    shader.setMat4("model", M_model);
 
     while (glfwWindowShouldClose(window.get()) == 0) {
 
@@ -138,19 +190,8 @@ int main()
         glBindTexture(GL_TEXTURE_2D, tex);
         glBindVertexArray(VAO);
 
-        for (int i = 0; i < 10; i++) {
-
-            float angle = 20.0f * static_cast<float>(i);
-
-            glm::mat4 M_model = glm::mat4(1.0f);
-            M_model = glm::translate(M_model, cubePositions[i]);
-            M_model = glm::rotate(
-                M_model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-
-            shader.setMat4("model", M_model);
-
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        glDrawArrays(GL_TRIANGLES, 0,
+            static_cast<int>(vertices.size() / stride));
 
         glfwSwapBuffers(window.get());
         glfwPollEvents();
