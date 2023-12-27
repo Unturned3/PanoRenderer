@@ -155,6 +155,7 @@ int main() {
 
     vb.bind();
 
+    // clang-format off
     glm::vec3 cubePositions[] = {
         glm::vec3( 0.0f,  0.0f,  0.0f), 
         glm::vec3( 2.0f,  5.0f, -15.0f), 
@@ -167,6 +168,7 @@ int main() {
         glm::vec3( 1.5f,  0.2f, -1.5f), 
         glm::vec3(-1.3f,  1.0f, -1.5f)  
     };
+    // clang-format on
 
     glBindVertexArray(0);
     glDisableVertexAttribArray(0);
