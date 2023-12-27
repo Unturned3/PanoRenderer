@@ -1,59 +1,76 @@
 
 #pragma once
+#include "utils.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <algorithm>
+#include <fstream>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <algorithm>
 #include <iostream>
-#include <string>
-#include <fstream>
 #include <sstream>
-#include "utils.hpp"
+#include <string>
 
 static uint compile_shader(uint type, const std::string& path);
 
 static uint create_shader(const std::string vertShaderPath,
-                   const std::string fragShaderPath);
+    const std::string fragShaderPath);
 
 class Shader {
 public:
+
     Shader(const std::string& vertShaderPath,
-           const std::string& fragShaderPath) {
+        const std::string& fragShaderPath)
+    {
         id_ = create_shader(vertShaderPath, fragShaderPath);
     }
-    void use() const {
+
+    void use() const
+    {
         glUseProgram(id_);
     }
-    void setBool(const std::string& name, bool val) const {
+
+    void setBool(const std::string& name, bool val) const
+    {
         glUniform1i(getULoc(name), static_cast<int>(val));
     }
-    void setInt(const std::string& name, int val) const {
+
+    void setInt(const std::string& name, int val) const
+    {
         glUniform1i(getULoc(name), val);
     }
-    void setFloat(const std::string& name, float val) const {
+
+    void setFloat(const std::string& name, float val) const
+    {
         glUniform1f(getULoc(name), val);
     }
-    void setMat4(const std::string& name, const glm::mat4& m) const {
+
+    void setMat4(const std::string& name, const glm::mat4& m) const
+    {
         glUniformMatrix4fv(getULoc(name), 1, GL_FALSE, glm::value_ptr(m));
     }
-    const uint& id() const {
+
+    const uint& id() const
+    {
         return id_;
     }
+
 private:
     uint id_;
-    int getULoc(const std::string& name) const {
+    int getULoc(const std::string& name) const
+    {
         return glGetUniformLocation(id_, name.c_str());
     }
 };
 
-static uint compile_shader(uint type, const std::string& path) {
+static uint compile_shader(uint type, const std::string& path)
+{
     const std::string& src = utils::read_file(path);
     if (src.length() <= 0)
         throw std::runtime_error("Shader file " + path + " is empty!");
 
     uint id = glCreateShader(type);
-    const char *s = src.c_str();
+    const char* s = src.c_str();
     glShaderSource(id, 1, &s, nullptr);
     glCompileShader(id);
 
@@ -70,12 +87,13 @@ static uint compile_shader(uint type, const std::string& path) {
 }
 
 static uint create_shader(const std::string vertShaderPath,
-                          const std::string fragShaderPath) {
+    const std::string fragShaderPath)
+{
     uint p = glCreateProgram();
     uint vs = compile_shader(GL_VERTEX_SHADER, vertShaderPath);
     uint fs = compile_shader(GL_FRAGMENT_SHADER, fragShaderPath);
 
-    if (!vs || ! fs) {
+    if (!vs || !fs) {
         return 0;
     }
 

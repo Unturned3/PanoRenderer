@@ -1,48 +1,51 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <cstdint>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
-#include <algorithm>
 #include <iostream>
-#include <vector>
-#include <cmath>
-#include <string>
-#include <cstdint>
-#include <cassert>
 #include <memory>
+#include <string>
+#include <vector>
 
-#include "utils.hpp"
+#include "IndexBuffer.hpp"
 #include "Shader.hpp"
 #include "VertexBuffer.hpp"
-#include "IndexBuffer.hpp"
 #include "cube.h"
+#include "utils.hpp"
 
 #include "stb_image.h"
 #include "stb_image_write.h"
 
 void glErrorCallback_(GLenum source, GLenum type, GLuint id, GLenum severity,
-                      GLsizei length, const GLchar *msg, const void *userParam) {
+    GLsizei length, const GLchar* msg, const void* userParam)
+{
     LOG("OpenGL error:");
     LOG(msg);
 }
 
-void glfwErrorCallback_(int err, const char *msg) {
+void glfwErrorCallback_(int err, const char* msg)
+{
     LOG("GLFW error code: ", err);
     LOG(msg);
 }
 
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow* window);
 
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float yaw = 0.0f;
 float pitch = 0.0f;
 
-int main() {
+int main()
+{
 
     /*
     if (!GLEW_NV_vdpau_interop)
@@ -51,7 +54,7 @@ int main() {
         LOG("NV_vdpau_interop2 unavailable!");
     */
 
-    GLFWwindow *window;  // created window
+    GLFWwindow* window; // created window
 
     glfwSetErrorCallback(glfwErrorCallback_);
     if (glfwInit() == 0) {
@@ -60,7 +63,7 @@ int main() {
     }
 
     glfwDefaultWindowHints();
-    //glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    // glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
@@ -114,8 +117,8 @@ int main() {
 
     int width, height, channels;
     stbi_set_flip_vertically_on_load(true);
-    uint8_t *img = stbi_load(utils::path("images/container.jpg").c_str(),
-                             &width, &height, &channels, 0);
+    uint8_t* img = stbi_load(utils::path("images/container.jpg").c_str(),
+        &width, &height, &channels, 0);
     if (!img) {
         throw std::runtime_error("stbi_load() failed!");
     }
@@ -126,7 +129,7 @@ int main() {
     glBindTexture(GL_TEXTURE_2D, tex);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
-                 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+        0, GL_RGB, GL_UNSIGNED_BYTE, img);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     stbi_image_free(img);
@@ -138,20 +141,20 @@ int main() {
     VertexBuffer vb(cube_vertices, sizeof(cube_vertices));
 
     Shader shader(utils::path("shaders/vertex.glsl"),
-                  utils::path("shaders/frag.glsl"));
+        utils::path("shaders/frag.glsl"));
     shader.use();
 
     uint VAO;
-    glGenVertexArrays(1, &VAO); 
+    glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-                          stride*sizeof(float), (void*)0);
+        stride * sizeof(float), (void*)0);
 
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,
-                          stride*sizeof(float), (void*)(3*sizeof(float)));
+        stride * sizeof(float), (void*)(3 * sizeof(float)));
 
     vb.bind();
 
@@ -177,12 +180,13 @@ int main() {
     vb.unbind();
 
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE); 
+    // glEnable(GL_CULL_FACE);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
-    glm::mat4 M_proj = glm::perspective(glm::radians(65.0f),
-                                        (float)width/float(height),
-                                        0.5f, 100.0f);
+    glm::mat4 M_proj = glm::perspective(
+        glm::radians(65.0f),
+        (float)width / float(height),
+        0.5f, 100.0f);
     shader.setMat4("proj", M_proj);
 
     while (glfwWindowShouldClose(window) == 0) {
@@ -197,9 +201,9 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, tex);
         glBindVertexArray(VAO);
 
-        for(int i=0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
 
-            float angle = 20.0f * static_cast<float>(i); 
+            float angle = 20.0f * static_cast<float>(i);
 
             glm::mat4 M_model = glm::mat4(1.0f);
             M_model = glm::translate(M_model, cubePositions[i]);
@@ -214,15 +218,14 @@ int main() {
         glfwPollEvents();
     }
 
-
     int w, h;
     glfwGetFramebufferSize(window, &w, &h);
     LOG("WH: ", w, " ", h);
 
-    auto imgOut = std::make_unique<uint8_t[]>(static_cast<size_t>(w*h*3));
+    auto imgOut = std::make_unique<uint8_t[]>(static_cast<size_t>(w * h * 3));
     assert(imgOut.get());
 
-    //glReadBuffer(GL_BACK);
+    // glReadBuffer(GL_BACK);
     glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, imgOut.get());
     stbi_flip_vertically_on_write(true);
     stbi_write_jpg("out.jpg", w, h, 3, imgOut.get(), 90);
@@ -231,8 +234,8 @@ int main() {
     return 0;
 }
 
-void processInput(GLFWwindow *window) {
-
+void processInput(GLFWwindow* window)
+{
     const float cameraSpeed = 0.05f; // adjust accordingly
     glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, cameraUp));
 
@@ -259,9 +262,9 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
         yaw -= 1;
 
-    if(pitch > 89.0f)
-        pitch =  89.0f;
-    if(pitch < -89.0f)
+    if (pitch > 89.0f)
+        pitch = 89.0f;
+    if (pitch < -89.0f)
         pitch = -89.0f;
 
     direction.x = -sin(glm::radians(yaw)) * cos(glm::radians(pitch));
