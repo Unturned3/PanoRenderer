@@ -18,6 +18,7 @@ target_compile_features(main PRIVATE cxx_std_17)
 target_compile_options(main PRIVATE
     -Wall -Wextra -Wpedantic -Wconversion
     -Wno-unused-variable -Wno-unused-parameter
+    -O3
     #-g3
     #-Werror
 )

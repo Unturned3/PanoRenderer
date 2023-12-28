@@ -7,3 +7,5 @@ target_sources(stb_image PRIVATE
     stb_image.c
     stb_image_write.c
 )
+
+target_compile_options(stb_image PRIVATE -O3)

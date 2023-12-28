@@ -43,7 +43,7 @@ float fov = 75.0f;
 
 int main()
 {
-    const int w_w = 600, w_h = 600;
+    const int w_w = 1280, w_h = 720;
     Window window(w_w, w_h, "OpenGL Test");
 
     if (glewInit() != GLEW_OK)
@@ -54,21 +54,25 @@ int main()
     else
         LOG("glDebugMessageCallback not available.");
 
+    LOG("Loading image...");
     int width, height, channels;
     stbi_set_flip_vertically_on_load(true);
     uint8_t* img = stbi_load(
-        utils::path("images/pano-5760.jpg").c_str(),
+        utils::path("images/p1.jpg").c_str(),
         &width, &height, &channels, 0);
 
     if (!img) throw std::runtime_error("stbi_load() failed!");
     assert(channels == 3);
+    LOG("Done.");
 
     uint tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
         GL_UNSIGNED_BYTE, img);
