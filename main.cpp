@@ -34,7 +34,7 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
 
 void processInput(GLFWwindow* window);
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float yaw = 0.0f;
@@ -56,7 +56,7 @@ int main()
 
     int width, height, channels;
     stbi_set_flip_vertically_on_load(true);
-    uint8_t* img = stbi_load(utils::path("images/pano-1024.jpg").c_str(),
+    uint8_t* img = stbi_load(utils::path("images/pano-5760.jpg").c_str(),
         &width, &height, &channels, 0);
     if (!img) {
         throw std::runtime_error("stbi_load() failed!");
@@ -67,6 +67,9 @@ int main()
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
         GL_UNSIGNED_BYTE, img);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -76,17 +79,22 @@ int main()
     std::vector<float> vertices;
     {
         std::vector<glm::vec3> vs;
-        float t = 1.0f / sqrtf(2);
-        glm::vec3 a { 1,  0, -t};
-        glm::vec3 b {-1,  0, -t};
-        glm::vec3 c { 0,  1,  t};
-        glm::vec3 d { 0, -1,  t};
+        glm::vec3 a { 0,  1,  0};
+        glm::vec3 b { 1,  0,  0};
+        glm::vec3 c { 0,  0, -1};
+        glm::vec3 d {-1,  0,  0};
+        glm::vec3 e { 0,  0,  1};
+        glm::vec3 f { 0, -1,  0};
 
         vs = {
             a, c, d,
-            a, d, b,
+            a, d, e,
+            a, e, b,
             a, b, c,
-            b, d, c,
+            f, b, e,
+            f, c, b,
+            f, d, c,
+            f, e, d,
         };
 
         for (int i = 0; i < 5; i++)
@@ -104,16 +112,17 @@ int main()
             float y = vs[i].y;
             float z = vs[i].z;
 
-            float _pitch = asinf(z);
-            float _yaw = asinf(y / cosf(_pitch));
-            _pitch = (_pitch + M_PI / 2) / M_PI;
-            _yaw = (_yaw + M_PI / 2) / M_PI;
+            float theta = atan2f(-x,z);
+            float phi = asinf(y);
+            theta = (theta + (float)M_PI) / (2 * (float)M_PI);
+            phi = (phi + (float)M_PI / 2) / (float)M_PI;
 
-            miny = std::min(miny, _yaw);
-            maxy = std::max(maxy, _yaw);
-            minp = std::min(minp, _pitch);
-            maxp = std::max(maxp, _pitch);
-            ts.push_back(glm::vec2(_yaw, _pitch));
+            miny = std::min(miny, theta);
+            maxy = std::max(maxy, theta);
+            minp = std::min(minp, phi);
+            maxp = std::max(maxp, phi);
+            //ts.push_back(glm::vec2(_yaw, _pitch));
+            ts.push_back(glm::vec2(theta, phi));
         }
 
         LOG(miny);
@@ -139,7 +148,7 @@ int main()
     Shader shader(
         utils::path("shaders/vertex.glsl"), utils::path("shaders/frag.glsl"));
     shader.use();
-    shader.setBool("useTexture", false);
+    shader.setBool("useTexture", true);
     shader.setVec3("color", glm::vec3(1, 1, 1));
 
     uint VAO;
@@ -150,11 +159,9 @@ int main()
     glVertexAttribPointer(
         0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)0);
 
-    /*
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(
         2, 2, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(3*sizeof(float)));
-    */
 
     vb.bind();
 
@@ -164,14 +171,14 @@ int main()
     glDisableVertexAttribArray(2);
     vb.unbind();
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    //glCullFace(GL_FRONT);
+    glCullFace(GL_FRONT);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
     glm::mat4 M_proj = glm::perspective(
-        glm::radians(65.0f), (float)w_w / (float)w_h, 0.01f, 100.0f);
+        glm::radians(90.0f), (float)w_w / (float)w_h, 0.01f, 100.0f);
     shader.setMat4("proj", M_proj);
 
     glm::mat4 M_model = glm::mat4(1.0f);
