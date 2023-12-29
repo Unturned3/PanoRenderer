@@ -16,9 +16,9 @@
 
 #include "IndexBuffer.hpp"
 #include "Shader.hpp"
+#include "Sphere.hpp"
 #include "VertexBuffer.hpp"
 #include "Window.hpp"
-#include "Sphere.hpp"
 #include "cube.h"
 #include "utils.hpp"
 
@@ -41,7 +41,7 @@ float yaw = 0.0f;
 float pitch = 0.0f;
 float fov = 75.0f;
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     const int w_w = 640, w_h = 480;
     Window window(w_w, w_h, "OpenGL Test");
@@ -58,10 +58,10 @@ int main(int argc, char **argv)
     int width, height, channels;
     stbi_set_flip_vertically_on_load(true);
     uint8_t* img = stbi_load(
-        utils::path(filePath).c_str(),
-        &width, &height, &channels, 0);
+        utils::path(filePath).c_str(), &width, &height, &channels, 0);
 
-    if (!img) throw std::runtime_error("stbi_load() failed!");
+    if (!img)
+        throw std::runtime_error("stbi_load() failed!");
     assert(channels == 3);
 
     uint tex;
@@ -85,6 +85,7 @@ int main(int argc, char **argv)
 
     // Rectangle (two triangles) covering the screen.
     constexpr int stride = 3;
+    // clang-format off
     std::vector<float> vertices {
         -1, -1,  0,
          1,  1,  0,
@@ -93,9 +94,10 @@ int main(int argc, char **argv)
          1, -1,  0,
          1,  1,  0,
     };
+    // clang-format on
 
-    VertexBuffer vb(vertices.data(),
-        static_cast<uint>(vertices.size() * sizeof(float)));
+    VertexBuffer vb(
+        vertices.data(), static_cast<uint>(vertices.size() * sizeof(float)));
 
     Shader shader(
         utils::path("shaders/vertex.glsl"), utils::path("shaders/frag.glsl"));
@@ -129,8 +131,8 @@ int main(int argc, char **argv)
         glBindTexture(GL_TEXTURE_2D, tex);
         glBindVertexArray(VAO);
 
-        glDrawArrays(GL_TRIANGLES, 0,
-            static_cast<int>(vertices.size() / stride));
+        glDrawArrays(
+            GL_TRIANGLES, 0, static_cast<int>(vertices.size() / stride));
 
         glfwSwapBuffers(window.get());
         glfwPollEvents();
@@ -157,7 +159,7 @@ void processInput(GLFWwindow* window)
         fov -= 1;
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         fov += 1;
-    
+
     fov = std::min(120.0f, fov);
     fov = std::max(10.0f, fov);
     float cam_rot_speed = 1.2f - (120 - fov) / 120.0f;
@@ -179,7 +181,7 @@ void processInput(GLFWwindow* window)
 
     glm::vec3 direction {
         -sin(ry) * cos(rp),
-         sin(rp),
+        sin(rp),
         -cos(ry) * cos(rp),
     };
     cameraFront = direction;
