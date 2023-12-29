@@ -40,6 +40,11 @@ public:
         glUniform1f(getULoc(name), val);
     }
 
+    void setVec2(const std::string& name, const glm::vec2& v) const
+    {
+        glUniform2f(getULoc(name), v.x, v.y);
+    }
+
     void setVec3(const std::string& name, const glm::vec3& v) const
     {
         glUniform3f(getULoc(name), v.x, v.y, v.z);

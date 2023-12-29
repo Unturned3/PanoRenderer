@@ -55,14 +55,14 @@ int main(int argc, char** argv)
         LOG("glDebugMessageCallback not available.");
 
     std::string filePath = argc < 2 ? "images/p1.jpg" : argv[1];
-    int width, height, channels;
+    int img_w, img_h, img_channels;
     stbi_set_flip_vertically_on_load(true);
     uint8_t* img = stbi_load(
-        utils::path(filePath).c_str(), &width, &height, &channels, 0);
+        utils::path(filePath).c_str(), &img_w, &img_h, &img_channels, 0);
 
     if (!img)
         throw std::runtime_error("stbi_load() failed!");
-    assert(channels == 3);
+    assert(img_channels == 3);
 
     uint tex;
     glGenTextures(1, &tex);
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img_w, img_h, 0, GL_RGB,
         GL_UNSIGNED_BYTE, img);
     glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -102,6 +102,18 @@ int main(int argc, char** argv)
     Shader shader(
         utils::path("shaders/vertex.glsl"), utils::path("shaders/frag.glsl"));
     shader.use();
+    {
+        // proportion of the missing sphere that's below the horizon
+        double m = 1;
+        if (argc >= 3)
+            m = std::stod(argv[2]);
+        double x = (double)img_w / 2 / (double)img_h;
+        float a = (float)(1 / (2 * M_PI));
+        float b = (float)(x * M_1_PI);
+        float c = (float)(x / 2 + (1 - x) * m);
+        shader.setVec2("norm", glm::vec2(a, b));
+        shader.setVec2("bias", glm::vec2(0.5, c));
+    }
 
     uint VAO;
     glGenVertexArrays(1, &VAO);
@@ -118,9 +130,8 @@ int main(int argc, char** argv)
         processInput(window.get());
 
         glm::mat4 M_proj = glm::perspective(
-            glm::radians(fov), (float)w_w / (float)w_h, 0.01f, 100.0f);
-        M_proj = glm::inverse(M_proj);
-        shader.setMat4("inv_proj", M_proj);
+            glm::radians(fov), (float)w_w / (float)w_h, 0.1f, 2.0f);
+        shader.setMat4("proj", M_proj);
 
         glm::mat4 M_view
             = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
