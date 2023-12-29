@@ -1,9 +1,10 @@
 
 #pragma once
 
-#include "utils.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#include "utils.hpp"
 
 class IndexBuffer {
 public:
@@ -12,8 +13,8 @@ public:
     {
         glGenBuffers(1, &id_);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id_);
-        glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER, count * sizeof(uint), data, usage);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(uint), data,
+                     usage);
     }
 
     ~IndexBuffer() { glDeleteBuffers(1, &id_); }

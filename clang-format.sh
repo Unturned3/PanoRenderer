@@ -3,7 +3,6 @@
 script_dir=$(dirname "$(readlink -f "$0")")
 cd $script_dir
 
-clang-format -i \
-	--style='{BasedOnStyle: WebKit, ColumnLimit: 80}' \
-	*.h *.hpp *.cpp \
+clang-format -i -style=file \
+	*.h *.hpp *.cpp
 

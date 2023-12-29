@@ -1,8 +1,8 @@
 
 #pragma once
-#include "utils.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
 #include <algorithm>
 #include <fstream>
 #include <glm/glm.hpp>
@@ -11,10 +11,12 @@
 #include <sstream>
 #include <string>
 
+#include "utils.hpp"
+
 static uint compile_shader(uint type, const std::string& path);
 
-static uint create_shader(
-    const std::string vertShaderPath, const std::string fragShaderPath);
+static uint create_shader(const std::string vertShaderPath,
+                          const std::string fragShaderPath);
 
 class Shader {
 public:
@@ -88,8 +90,8 @@ static uint compile_shader(uint type, const std::string& path)
     return id;
 }
 
-static uint create_shader(
-    const std::string vertShaderPath, const std::string fragShaderPath)
+static uint create_shader(const std::string vertShaderPath,
+                          const std::string fragShaderPath)
 {
     uint p = glCreateProgram();
     uint vs = compile_shader(GL_VERTEX_SHADER, vertShaderPath);

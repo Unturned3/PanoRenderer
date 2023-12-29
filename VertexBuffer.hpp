@@ -1,9 +1,10 @@
 
 #pragma once
 
-#include "utils.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#include "utils.hpp"
 
 class VertexBuffer {
 public:

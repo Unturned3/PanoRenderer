@@ -1,0 +1,6 @@
+---
+BasedOnStyle: Google
+BreakBeforeBraces: Stroustrup
+ColumnLimit: 80
+IndentWidth: 4
+AccessModifierOffset: -4

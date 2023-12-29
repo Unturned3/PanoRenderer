@@ -24,8 +24,10 @@ target_compile_options(main PRIVATE
 )
 
 add_subdirectory(stb_image)
-target_include_directories(main PRIVATE stb_image)
 target_link_libraries(main PRIVATE stb_image)
+
+add_subdirectory(imgui)
+target_link_libraries(main PRIVATE imgui)
 
 get_os_name(OS_)
 get_linux_distro_name(DISTRO_)

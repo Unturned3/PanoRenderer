@@ -1,13 +1,15 @@
 
 #pragma once
-#include "config.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
 #include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
+
+#include "config.h"
 
 typedef unsigned int uint;
 
@@ -21,16 +23,16 @@ namespace utils {
 
 // Variadic Templates
 // https://stackoverflow.com/a/29326784
-template <typename... Args> void log(Args&&... args)
+template <typename... Args>
+void log(Args&&... args)
 {
     (std::cout << ... << args) << std::endl;
 }
 
 std::string read_file(const std::string& path)
 {
-    std::ifstream f { path };
-    if (f.fail())
-        throw std::runtime_error("Failed to read file " + path);
+    std::ifstream f{path};
+    if (f.fail()) throw std::runtime_error("Failed to read file " + path);
     std::stringstream ss;
     ss << f.rdbuf();
     return ss.str();
@@ -65,4 +67,4 @@ void probe_OpenGL_properties()
     LOG("Max rectangular texture size: ", maxRectTexSize);
 }
 
-} // namespace utils
+}  // namespace utils
