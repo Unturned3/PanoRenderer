@@ -15,10 +15,10 @@ uniform float lod;
 
 vec2 Cart2Spherical(vec3 p) {
     /*
-    vec2 uv = vec2(atan(-p.x, p.z), asin(p.y));
+    vec2 uv = vec2(atan(p.x, -p.z), asin(p.y));
     uv = uv * norm + bias;
     */
-    float u = atan(-p.x, p.z) / (2 * pi);
+    float u = atan(p.x, -p.z) / (2 * pi);
     float v = asin(p.y) * v_norm + v_bias;
     float ua = u + 0.5;
     float ub = fract(u + 1.0) - 0.5;
