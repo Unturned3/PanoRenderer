@@ -40,6 +40,7 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float yaw = 0.0f;
 float pitch = 0.0f;
 float fov = 75.0f;
+float max_fov = 120.0f;
 
 int main(int argc, char** argv)
 {
@@ -68,13 +69,21 @@ int main(int argc, char** argv)
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
 
+    /*
+    float aniso = 0.0f;
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+    LOG(aniso);
+    */
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         float borderColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, 4.0f);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img_w, img_h, 0, GL_RGB,
@@ -107,12 +116,11 @@ int main(int argc, char** argv)
         double m = 1;
         if (argc >= 3)
             m = std::stod(argv[2]);
-        double x = (double)img_w / 2 / (double)img_h;
-        float a = (float)(1 / (2 * M_PI));
-        float b = (float)(x * M_1_PI);
-        float c = (float)(x / 2 + (1 - x) * m);
-        shader.setVec2("norm", glm::vec2(a, b));
-        shader.setVec2("bias", glm::vec2(0.5, c));
+        double u = (double)img_w / 2 / (double)img_h;
+        float v_n = (float)(u * M_1_PI);
+        float v_b = (float)(u / 2 + (1 - u) * m);
+        shader.setFloat("v_norm", v_n);
+        shader.setFloat("v_bias", v_b);
     }
 
     uint VAO;
@@ -128,6 +136,12 @@ int main(int argc, char** argv)
     while (glfwWindowShouldClose(window.get()) == 0) {
 
         processInput(window.get());
+
+        float fov_thresh = 75.0f;
+        if (fov <= fov_thresh)
+            shader.setFloat("lod", 0.0f);
+        else
+            shader.setFloat("lod", (fov - fov_thresh) / (max_fov - fov_thresh) + 1.0f);
 
         glm::mat4 M_proj = glm::perspective(
             glm::radians(fov), (float)w_w / (float)w_h, 0.1f, 2.0f);
@@ -171,9 +185,9 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         fov += 1;
 
-    fov = std::min(120.0f, fov);
+    fov = std::min(max_fov, fov);
     fov = std::max(10.0f, fov);
-    float cam_rot_speed = 1.2f - (120 - fov) / 120.0f;
+    float cam_rot_speed = 1.2f - (max_fov - fov) / max_fov;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         pitch += cam_rot_speed;

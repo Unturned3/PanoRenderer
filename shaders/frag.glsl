@@ -7,13 +7,22 @@ out vec4 fragColor;
 uniform mat4 view;
 uniform mat4 proj;
 uniform sampler2D tex;
-uniform vec2 norm;
-uniform vec2 bias;
+uniform float v_norm;
+uniform float v_bias;
+uniform float lod;
 
-vec2 Cart2Spherical(vec3 v) {
-    vec2 uv = vec2(atan(-v.x, v.z), asin(v.y));
+#define pi 3.141592653589793
+
+vec2 Cart2Spherical(vec3 p) {
+    /*
+    vec2 uv = vec2(atan(-p.x, p.z), asin(p.y));
     uv = uv * norm + bias;
-    return uv;
+    */
+    float u = atan(-p.x, p.z) / (2 * pi);
+    float v = asin(p.y) * v_norm + v_bias;
+    float ua = u + 0.5;
+    float ub = fract(u + 1.0) - 0.5;
+    return vec2(fwidth(ua) < fwidth(ub) ? ua : ub, v);
 }
 
 void main() {
@@ -21,6 +30,6 @@ void main() {
     mat4 inv_proj = inverse(proj);
     vec4 p = inv_view * inv_proj * localPos;
     vec2 uv = Cart2Spherical(normalize(p.xyz));
-    vec3 color = texture(tex, uv).rgb;
-    fragColor = vec4(color, 1.0);
+    //fragColor = texture(tex, uv);
+    fragColor = textureLod(tex, uv, lod);
 }
