@@ -36,6 +36,8 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
     LOG(msg);
 }
 
+void keyCallback_(GLFWwindow* window, int key, int scancode, int action,
+                  int mods);
 void processInput(GLFWwindow* window);
 
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -45,12 +47,14 @@ float yaw = 0.0f;
 float pitch = 0.0f;
 float fov = 75.0f;
 float max_fov = 120.0f;
+bool showUI = true;
 
 int main(int argc, char** argv)
 {
-    const int w_w = 640, w_h = 480;
+    const int w_w = 1280, w_h = 720;
     Window window(w_w, w_h, "OpenGL Test", argc <= 3);
-    glfwSwapInterval(1);
+    glfwSetKeyCallback(window.get(), keyCallback_);
+    glfwSwapInterval(0);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -143,7 +147,22 @@ int main(int argc, char** argv)
     vb.bind();
     glClearColor(0, 0, 0, 0);
 
+    int frame_cnt = 0;
+    float fps_sum = 0;
+    float fps = 1;
+
     while (glfwWindowShouldClose(window.get()) == 0) {
+        frame_cnt++;
+        fps_sum += io.Framerate;
+        {
+            int limit = (int)fps / 10 + 1;
+            if (frame_cnt == limit) {
+                fps = fps_sum / (float)limit;
+                frame_cnt = 0;
+                fps_sum = 0;
+            }
+        }
+
         // Process input
         glfwPollEvents();
         processInput(window.get());
@@ -174,32 +193,32 @@ int main(int argc, char** argv)
                      static_cast<int>(vertices.size() / stride));
 
         // Declare UI
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        {
-            ImGui::SetNextWindowSize(ImVec2(265, 75));
-            ImGui::Begin("Debug Info", nullptr,
-                         ImGuiWindowFlags_NoResize |
-                             ImGuiWindowFlags_NoFocusOnAppearing |
-                             ImGuiWindowFlags_NoScrollbar |
-                             ImGuiWindowFlags_NoTitleBar);
-            ImGui::Text("Pitch: %.1f°, Yaw: %.1f°, FoV: %.0f°", pitch, yaw,
-                        fov);
-            ImGui::Text("Average %.3f ms/frame (%.1f FPS)",
-                        1000.0f / io.Framerate, io.Framerate);
-            ImGui::Text("Window focused: %s",
-                        ImGui::IsWindowFocused() ? "yes" : "no");
-            ImGui::End();
-        }
+        if (showUI) {
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+            {
+                ImGui::SetNextWindowSize(ImVec2(270, 80));
+                ImGui::Begin("Debug Info (Press H to hide/show)", nullptr,
+                             ImGuiWindowFlags_NoResize |
+                                 ImGuiWindowFlags_NoFocusOnAppearing |
+                                 ImGuiWindowFlags_NoScrollbar);
+                ImGui::Text("Pitch: %.1f°, Yaw: %.1f°, FoV: %.0f°", pitch, yaw,
+                            fov);
+                ImGui::Text("Average %.2f ms/frame (%.1f FPS)", 1000.0f / fps,
+                            fps);
+                ImGui::Text("Window focused: %s",
+                            ImGui::IsWindowFocused() ? "yes" : "no");
+                ImGui::End();
+            }
 
-        // Render UI
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            // Render UI
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        }
 
         glfwSwapBuffers(window.get());
 
-        ImGui::SetWindowFocus(nullptr);
         if (!window.visible()) {
             glfwSwapBuffers(window.get());
             break;
@@ -224,6 +243,12 @@ int main(int argc, char** argv)
     ImGui::DestroyContext();
 
     return 0;
+}
+
+void keyCallback_(GLFWwindow* window, int key, int scancode, int action,
+                  int mods)
+{
+    if (key == GLFW_KEY_H && action == GLFW_PRESS) showUI = !showUI;
 }
 
 void processInput(GLFWwindow* window)
