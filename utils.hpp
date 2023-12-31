@@ -31,7 +31,7 @@ void log(Args&&... args)
 
 std::string read_file(const std::string& path)
 {
-    std::ifstream f{path};
+    std::ifstream f {path};
     if (f.fail()) throw std::runtime_error("Failed to read file " + path);
     std::stringstream ss;
     ss << f.rdbuf();
@@ -65,6 +65,21 @@ void probe_OpenGL_properties()
     int maxRectTexSize;
     glGetIntegerv(GL_MAX_RECTANGLE_TEXTURE_SIZE, &maxRectTexSize);
     LOG("Max rectangular texture size: ", maxRectTexSize);
+}
+
+std::string pretty_matrix(const float* a, size_t n, size_t m, int sig_figs,
+                          bool col_major = true)
+{
+    std::stringstream s;
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < m; ++j) {
+            size_t k = col_major ? (j * m + i) : (i * m + j);
+            s << std::fixed << std::setprecision(sig_figs)
+              << std::setw(sig_figs + 4) << *(a + k);
+        }
+        s << "\n";
+    }
+    return s.str();
 }
 
 }  // namespace utils

@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstdint>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -40,21 +41,32 @@ void keyCallback_(GLFWwindow* window, int key, int scancode, int action,
                   int mods);
 void processInput(GLFWwindow* window);
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-float yaw = 0.0f;
-float pitch = 0.0f;
 float fov = 75.0f;
 float max_fov = 120.0f;
 bool showUI = true;
 
+// Initial camera orientation: upright, facing negative z axis
+// clang-format off
+float init_rot_M[] = {
+    1,  0,  0,  0,
+    0,  1,  0,  0,
+    0,  0, -1,  0,
+    0,  0,  0,  1,
+};
+// clang-format on
+// Transpose, because GLM is column-major by default
+glm::mat4 M_rot = glm::transpose(glm::make_mat4(init_rot_M));
+
+// "front" is the intrinsic (local) -z axis.
+glm::vec3 front = {0, 0, -1};
+glm::vec3 up, right;
+
 int main(int argc, char** argv)
 {
-    const int w_w = 1280, w_h = 720;
+    const int w_w = 640, w_h = 480;
     Window window(w_w, w_h, "OpenGL Test", argc <= 3);
     glfwSetKeyCallback(window.get(), keyCallback_);
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -77,11 +89,11 @@ int main(int argc, char** argv)
     else
         LOG("glDebugMessageCallback not available.");
 
-    std::string filePath = argc < 2 ? "images/p1.jpg" : argv[1];
+    std::string filePath = argc < 2 ? "../images/p1.jpg" : argv[1];
     int img_w, img_h, img_channels;
     stbi_set_flip_vertically_on_load(true);
-    uint8_t* img = stbi_load(utils::path(filePath).c_str(), &img_w, &img_h,
-                             &img_channels, 0);
+    uint8_t* img =
+        stbi_load(filePath.c_str(), &img_w, &img_h, &img_channels, 0);
 
     if (!img) throw std::runtime_error("stbi_load() failed!");
     assert(img_channels == 3);
@@ -145,13 +157,14 @@ int main(int argc, char** argv)
                           (void*)0);
 
     vb.bind();
-    glClearColor(0, 0, 0, 0);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
     int frame_cnt = 0;
     float fps_sum = 0;
     float fps = 1;
 
     while (glfwWindowShouldClose(window.get()) == 0) {
+        // Compute fps
         frame_cnt++;
         fps_sum += io.Framerate;
         {
@@ -183,7 +196,9 @@ int main(int argc, char** argv)
         shader.setMat4("proj", M_proj);
 
         glm::mat4 M_view =
-            glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+            glm::lookAt(glm::vec3(0), glm::vec3(glm::column(M_rot, 2)),
+                        glm::vec3(glm::column(M_rot, 1)));
+
         shader.setMat4("view", M_view);
 
         // Draw projected panorama
@@ -198,17 +213,21 @@ int main(int argc, char** argv)
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
             {
-                ImGui::SetNextWindowSize(ImVec2(270, 80));
+                // ImGui::SetNextWindowSize(ImVec2(270, 80));
                 ImGui::Begin("Debug Info (Press H to hide/show)", nullptr,
-                             ImGuiWindowFlags_NoResize |
-                                 ImGuiWindowFlags_NoFocusOnAppearing |
+                             ImGuiWindowFlags_NoFocusOnAppearing |
                                  ImGuiWindowFlags_NoScrollbar);
-                ImGui::Text("Pitch: %.1f°, Yaw: %.1f°, FoV: %.0f°", pitch, yaw,
+                ImGui::Text("Pitch: %.1f°, Yaw: %.1f°, FoV: %.0f°", 0.0f, 0.0f,
                             fov);
                 ImGui::Text("Average %.2f ms/frame (%.1f FPS)", 1000.0f / fps,
                             fps);
-                ImGui::Text("Window focused: %s",
-                            ImGui::IsWindowFocused() ? "yes" : "no");
+                // ImGui::Text("Window focused: %s", ImGui::IsWindowFocused());
+                ImGui::Text("M_rot: ");
+                ImGui::SameLine();
+                ImGui::Text("%s",
+                            utils::pretty_matrix(glm::value_ptr(M_rot), 4, 4, 2)
+                                .c_str());
+                ImGui::Text("|right|: %f", glm::length(right));
                 ImGui::End();
             }
 
@@ -220,6 +239,13 @@ int main(int argc, char** argv)
         glfwSwapBuffers(window.get());
 
         if (!window.visible()) {
+            /*
+            Swap again so both the front and back buffer is guaranteed to
+            contain the latest frame, which is then read by glReadPixels
+            below. If we omit this, glReadPixels may return an empty frame on
+            some platforms (because it read the other buffer which was not
+            rendered to yet).
+            */
             glfwSwapBuffers(window.get());
             break;
         }
@@ -248,33 +274,49 @@ int main(int argc, char** argv)
 void keyCallback_(GLFWwindow* window, int key, int scancode, int action,
                   int mods)
 {
-    if (key == GLFW_KEY_H && action == GLFW_PRESS) showUI = !showUI;
+    if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_H) showUI = !showUI;
+    }
 }
 
 void processInput(GLFWwindow* window)
 {
+    // "up" is the extrinsic (global) y axis.
+    // row of M_rot is equiv. to col of inverse(M_rot).
+    up = glm::row(M_rot, 1);
+
+    // intrinsic (local) x axis.
+    right = {1, 0, 0};
+
+    // normalized projection of the intrinsic x axis
+    // onto the extrinsic xz plane.
+    // This has a problem: when the camera looks straight up or down,
+    // up and front will be parallel, resulting in a cross product with
+    // zero magnitude, getting the camera stuck.
+    //right = glm::cross(front, up);
+
+    glm::vec3 right_ = glm::normalize(right);
+
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) fov -= 1;
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) fov += 1;
 
     fov = std::min(max_fov, fov);
     fov = std::max(10.0f, fov);
-    float cam_rot_speed = 1.2f - (max_fov - fov) / max_fov;
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) pitch += cam_rot_speed;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) pitch -= cam_rot_speed;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) yaw += cam_rot_speed;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) yaw -= cam_rot_speed;
+    float rot_a = 1.2f - (max_fov - fov) / max_fov;
 
-    pitch = std::min(89.0f, pitch);
-    pitch = std::max(-89.0f, pitch);
-
-    float rp = glm::radians(pitch);
-    float ry = glm::radians(yaw);
-
-    glm::vec3 direction{
-        -sin(ry) * cos(rp),
-        sin(rp),
-        -cos(ry) * cos(rp),
-    };
-    cameraFront = direction;
+    // Passive rotation, so the rotation amount is the
+    // negative of the desired rotation direction.
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        M_rot = glm::rotate(M_rot, glm::radians(rot_a), front);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        M_rot = glm::rotate(M_rot, glm::radians(-rot_a), right_);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        M_rot = glm::rotate(M_rot, glm::radians(rot_a), right_);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        M_rot = glm::rotate(M_rot, glm::radians(-rot_a), up);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        M_rot = glm::rotate(M_rot, glm::radians(rot_a), up);
 }

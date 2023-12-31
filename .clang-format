@@ -1,5 +1,6 @@
 ---
 BasedOnStyle: Google
+SpaceBeforeCpp11BracedList: true
 BreakBeforeBraces: Stroustrup
 ColumnLimit: 80
 IndentWidth: 4
