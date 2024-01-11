@@ -2,7 +2,7 @@
 add_library(imgui STATIC)
 
 find_package(OpenGL REQUIRED)
-target_link_libraries(main PRIVATE OpenGL::GL)
+target_link_libraries(imgui PRIVATE OpenGL::GL)
 
 find_package(glfw3 3.3 REQUIRED)
 target_link_libraries(imgui PRIVATE glfw)

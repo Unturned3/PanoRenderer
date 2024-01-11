@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <thread>
 
 #include "IndexBuffer.hpp"
 #include "Shader.hpp"
@@ -49,20 +50,42 @@ bool showUI = true;
 // clang-format off
 float init_rot_M[] = {
     1,  0,  0,  0,
+    0,  0,  1,  0,
     0,  1,  0,  0,
-    0,  0, -1,  0,
     0,  0,  0,  1,
 };
 // clang-format on
 // Transpose, because GLM is column-major by default
-glm::mat4 M_rot = glm::transpose(glm::make_mat4(init_rot_M));
+//glm::mat4 M_rot = glm::transpose(glm::make_mat4(init_rot_M));
 
-// "front" is the intrinsic (local) -z axis.
-glm::vec3 front = {0, 0, -1};
-glm::vec3 up, right;
+glm::mat4 M_rot {1.0f};
+
+glm::vec3 front, up, right;
 
 int main(int argc, char** argv)
 {
+    if (false) {
+        glm::mat4 r = glm::transpose(glm::make_mat4(init_rot_M));
+        LOG("r:\n", utils::pretty_matrix(glm::value_ptr(r), 4, 4, 1));
+
+        glm::mat4 r2 = glm::rotate(r, glm::radians(45.0f), {1, 1, 1});
+        LOG("rot r:\n", utils::pretty_matrix(glm::value_ptr(r2), 4, 4, 1));
+
+        glm::mat4 r3 = r * glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), {1, 1, 1});
+        LOG("r * rot i:\n", utils::pretty_matrix(glm::value_ptr(r3), 4, 4, 1));
+
+        glm::mat4 r4 = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), {1, 1, 1}) * r;
+        LOG("rot i * r:\n", utils::pretty_matrix(glm::value_ptr(r4), 4, 4, 1));
+
+        glm::mat4 r5 = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), {1, 1, 1}) * r;
+        LOG("rot' i * r:\n", utils::pretty_matrix(glm::value_ptr(r4), 4, 4, 1));
+
+        LOG("r2 == r3: ", r2 == r3);
+        LOG("r2 == r4: ", r2 == r4);
+
+        return 0;
+    }
+
     const int w_w = 640, w_h = 480;
     Window window(w_w, w_h, "OpenGL Test", argc <= 3);
     glfwSetKeyCallback(window.get(), keyCallback_);
@@ -196,7 +219,7 @@ int main(int argc, char** argv)
         shader.setMat4("proj", M_proj);
 
         glm::mat4 M_view =
-            glm::lookAt(glm::vec3(0), glm::vec3(glm::column(M_rot, 2)),
+            glm::lookAt(glm::vec3(0), -glm::vec3(glm::column(M_rot, 2)),
                         glm::vec3(glm::column(M_rot, 1)));
 
         shader.setMat4("view", M_view);
@@ -228,6 +251,8 @@ int main(int argc, char** argv)
                             utils::pretty_matrix(glm::value_ptr(M_rot), 4, 4, 2)
                                 .c_str());
                 ImGui::Text("|right|: %f", glm::length(right));
+                ImGui::Text("up: %s", glm::to_string(up).c_str());
+                ImGui::Text("front: %s", glm::to_string(front).c_str());
                 ImGui::End();
             }
 
@@ -271,22 +296,69 @@ int main(int argc, char** argv)
     return 0;
 }
 
+bool properRot = false;
+
 void keyCallback_(GLFWwindow* window, int key, int scancode, int action,
                   int mods)
 {
+    if (properRot) {
+        front = {0, 0, -1};
+        //front = -glm::column(M_rot, 2);
+        up = {0, 1, 0};
+        //up = glm::column(M_rot, 1);
+        right = {1, 0, 0};
+        //right = glm::column(M_rot, 0);
+    }
+
+    float rot_a = 45.0f;
+    glm::vec3 right_ = glm::normalize(right);
+
     if (action == GLFW_PRESS) {
-        if (key == GLFW_KEY_H) showUI = !showUI;
+        if (key == GLFW_KEY_H)
+            showUI = !showUI;
+        if (properRot) {
+            glm::mat4 t {1.0f};
+            if (key == GLFW_KEY_LEFT)
+                t = glm::rotate(glm::mat4(1.0f), glm::radians(-rot_a), front);
+            if (key == GLFW_KEY_RIGHT)
+                t = glm::rotate(glm::mat4(1.0f), glm::radians(rot_a), front);
+            if (key == GLFW_KEY_W)
+                t = glm::rotate(glm::mat4(1.0f), glm::radians(rot_a), right_);
+            if (key == GLFW_KEY_S)
+                t = glm::rotate(glm::mat4(1.0f), glm::radians(-rot_a), right_);
+            if (key == GLFW_KEY_A)
+                t = glm::rotate(glm::mat4(1.0f), glm::radians(rot_a), up);
+            if (key == GLFW_KEY_D)
+                t = glm::rotate(glm::mat4(1.0f), glm::radians(-rot_a), up);
+
+            //t = glm::inverse(M_rot) * t * M_rot;
+            t = M_rot * t * glm::inverse(M_rot);
+            M_rot = t * M_rot;
+        }
     }
 }
 
 void processInput(GLFWwindow* window)
 {
+    if (properRot)
+        return;
+
+    glm::mat3 inv = glm::inverse(M_rot);
+
+    front = {0, 0, -1};
+    //front = -glm::row(M_rot, 2);
+    //front = inv * front;
+
     // "up" is the extrinsic (global) y axis.
     // row of M_rot is equiv. to col of inverse(M_rot).
-    up = glm::row(M_rot, 1);
+    up = {0, 1, 0};
+    //up = glm::row(M_rot, 1);
+    //up = inv * up;
 
     // intrinsic (local) x axis.
     right = {1, 0, 0};
+    //right = glm::row(M_rot, 0);
+    //right = inv * right;
 
     // normalized projection of the intrinsic x axis
     // onto the extrinsic xz plane.
@@ -305,18 +377,20 @@ void processInput(GLFWwindow* window)
 
     float rot_a = 1.2f - (max_fov - fov) / max_fov;
 
-    // Passive rotation, so the rotation amount is the
-    // negative of the desired rotation direction.
+    glm::mat4 t {1.0f};
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
+        t = glm::rotate(t, glm::radians(-rot_a), front);
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(rot_a), front);
+        t = glm::rotate(t, glm::radians(rot_a), front);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(-rot_a), right_);
+        t = glm::rotate(t, glm::radians(rot_a), right_);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(rot_a), right_);
+        t = glm::rotate(t, glm::radians(-rot_a), right_);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(-rot_a), up);
+        t = glm::rotate(t, glm::radians(rot_a), up);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(rot_a), up);
+        t = glm::rotate(t, glm::radians(-rot_a), up);
+
+    //t = inverse(M_rot) * t * M_rot;
+    M_rot = M_rot * t;
 }
