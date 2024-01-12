@@ -10,12 +10,15 @@
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/random.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 #include <thread>
+#include <random>
+#include <utility>
 
 #include "IndexBuffer.hpp"
 #include "Shader.hpp"
@@ -51,7 +54,7 @@ glm::vec3 front, up, right;
 
 int main(int argc, char** argv)
 {
-    const int w_w = 640, w_h = 480;
+    const int w_w = 1280, w_h = 720;
     Window window(w_w, w_h, "OpenGL Test", argc <= 3);
     glfwSetKeyCallback(window.get(), keyCallback_);
     glfwSwapInterval(1);
@@ -151,6 +154,18 @@ int main(int argc, char** argv)
     float fps_sum = 0;
     float fps = 1;
 
+    // Trajectory generation parameters
+    float focal_accel_m = 5;
+    float pose_accel_m = 3;
+    float delta = 1.0f / 60.0f;
+    float max_vel = 1;
+
+    float mean_pitch_accel = 0;
+    float mean_focal_accel = 0;
+
+    glm::vec3 prev_pose {0, 0, 75};
+    glm::vec3 prev_vel {0, 0, 0};
+
     while (glfwWindowShouldClose(window.get()) == 0) {
         // Compute fps
         frame_cnt++;
@@ -162,6 +177,47 @@ int main(int argc, char** argv)
                 frame_cnt = 0;
                 fps_sum = 0;
             }
+        }
+
+        // Calculate trajectory update
+        glm::vec2 pitch_yaw_accel {
+            glm::gaussRand(mean_pitch_accel, 1.0f) / 1.5, // pitch
+            glm::gaussRand(0.0f, 1.0f), // yaw
+        };
+        glm::vec3 accel {
+            glm::normalize(pitch_yaw_accel) * pose_accel_m,
+            glm::gaussRand(mean_focal_accel, 1.0f) * focal_accel_m, // focal
+        };
+
+        // Update trajectory
+        glm::vec3 vel = prev_vel + accel * delta;
+
+        if (glm::length(vel) > max_vel)
+            vel = max_vel * glm::normalize(vel);
+
+        glm::vec3 pose {prev_pose + vel * delta};
+
+        mean_pitch_accel = -pose.x / 2;
+        mean_focal_accel = (55 - pose.z) / 35;
+
+        prev_pose = pose;
+        prev_vel = vel;
+
+        {
+            front = {0, 0, -1};
+            up = glm::vec3(glm::row(M_rot, 1));
+            right = glm::cross(front, up);
+            glm::vec3 right_ = glm::normalize(right);
+
+            /*
+            fov += vel.z;
+            fov = std::min(max_fov, fov);
+            fov = std::max(10.0f, fov);
+            */
+
+            //M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
+            M_rot = glm::rotate(M_rot, glm::radians(vel.x), right_);
+            M_rot = glm::rotate(M_rot, glm::radians(vel.y), up);
         }
 
         // Process input
@@ -215,8 +271,18 @@ int main(int argc, char** argv)
                             utils::pretty_matrix(glm::value_ptr(M_rot), 4, 4, 2)
                                 .c_str());
                 ImGui::Text("|right|: %f", glm::length(right));
-                ImGui::Text("up: %s", glm::to_string(up).c_str());
-                ImGui::Text("front: %s", glm::to_string(front).c_str());
+                ImGui::Text("accel: %s", glm::to_string(accel).c_str());
+                ImGui::Text("vel: %s", glm::to_string(vel).c_str());
+                ImGui::Text("pose: %s", glm::to_string(pose).c_str());
+
+                if (ImGui::Button("Randomize rotation")) {
+                    float pitch = glm::linearRand(-50.0f, 50.0f);
+                    float yaw = glm::linearRand(-180.0f, 180.0f);
+                    glm::mat4 n {1.0f};
+                    n = glm::rotate(n, glm::radians(pitch), {1,0,0});
+                    n = glm::rotate(n, glm::radians(yaw), glm::vec3(glm::row(n,1)));
+                    M_rot = n;
+                }
                 ImGui::End();
             }
 
