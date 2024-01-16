@@ -47,7 +47,7 @@ void processInput(GLFWwindow* window);
 
 float fov = 75.0f;
 float max_fov = 120.0f;
-bool showUI = true;
+bool showUI = true, randomTrajectory = false;
 
 glm::mat4 M_rot {1.0f};
 glm::vec3 front, up, right;
@@ -189,35 +189,37 @@ int main(int argc, char** argv)
             glm::gaussRand(mean_focal_accel, 1.0f) * focal_accel_m, // focal
         };
 
-        // Update trajectory
-        glm::vec3 vel = prev_vel + accel * delta;
+            // Update trajectory
+            glm::vec3 vel = prev_vel + accel * delta;
 
-        if (glm::length(vel) > max_vel)
-            vel = max_vel * glm::normalize(vel);
+            if (glm::length(vel) > max_vel)
+                vel = max_vel * glm::normalize(vel);
 
-        glm::vec3 pose {prev_pose + vel * delta};
+            glm::vec3 pose {prev_pose + vel * delta};
 
-        mean_pitch_accel = -pose.x / 2;
-        mean_focal_accel = (55 - pose.z) / 35;
+            mean_pitch_accel = -pose.x / 2;
+            mean_focal_accel = (55 - pose.z) / 35;
 
-        prev_pose = pose;
-        prev_vel = vel;
+            prev_pose = pose;
+            prev_vel = vel;
 
-        {
-            front = {0, 0, -1};
-            up = glm::vec3(glm::row(M_rot, 1));
-            right = glm::cross(front, up);
-            glm::vec3 right_ = glm::normalize(right);
+        if (randomTrajectory) {
+            {
+                front = {0, 0, -1};
+                up = glm::vec3(glm::row(M_rot, 1));
+                right = glm::cross(front, up);
+                glm::vec3 right_ = glm::normalize(right);
 
-            /*
-            fov += vel.z;
-            fov = std::min(max_fov, fov);
-            fov = std::max(10.0f, fov);
-            */
+                /*
+                fov += vel.z;
+                fov = std::min(max_fov, fov);
+                fov = std::max(10.0f, fov);
+                */
 
-            //M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
-            M_rot = glm::rotate(M_rot, glm::radians(vel.x), right_);
-            M_rot = glm::rotate(M_rot, glm::radians(vel.y), up);
+                //M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
+                M_rot = glm::rotate(M_rot, glm::radians(vel.x), right_);
+                M_rot = glm::rotate(M_rot, glm::radians(vel.y), up);
+            }
         }
 
         // Process input
@@ -274,6 +276,8 @@ int main(int argc, char** argv)
                 ImGui::Text("accel: %s", glm::to_string(accel).c_str());
                 ImGui::Text("vel: %s", glm::to_string(vel).c_str());
                 ImGui::Text("pose: %s", glm::to_string(pose).c_str());
+
+                ImGui::Checkbox("Enable random trajectory", &randomTrajectory);
 
                 if (ImGui::Button("Randomize rotation")) {
                     float pitch = glm::linearRand(-50.0f, 50.0f);
