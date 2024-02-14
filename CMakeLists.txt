@@ -1,6 +1,8 @@
 
 cmake_minimum_required(VERSION 3.7...3.27)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 project(OpenGL-Test VERSION 0.1
                     DESCRIPTION "OpenGL Test"
                     LANGUAGES C CXX)
@@ -11,10 +13,10 @@ include(utils)
 
 prevent_in_src_build()
 
-add_executable(main main.cpp Sphere.cpp)
+add_executable(main main.cpp)
 
 set_target_properties(main PROPERTIES CXX_EXTENSIONS OFF)
-target_compile_features(main PRIVATE cxx_std_17)
+target_compile_features(main PRIVATE cxx_std_20)
 target_compile_options(main PRIVATE
     -Wall -Wextra -Wpedantic -Wconversion
     -Wno-unused-variable -Wno-unused-parameter
