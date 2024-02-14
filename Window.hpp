@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include <exception>
+#include <utility>
 
 #include "AppState.hpp"
 #include "utils.hpp"
@@ -65,6 +66,13 @@ public:
     bool visible() const { return visible_; }
 
     const std::string& name() const { return name_; }
+
+    std::pair<int, int> frameBufferShape()
+    {
+        int w, h;
+        glfwGetFramebufferSize(window_, &w, &h);
+        return {w, h};
+    }
 
     void processInput()
     {

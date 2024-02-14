@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "AppState.hpp"
+#include "Image.hpp"
 #include "IndexBuffer.hpp"
 #include "Shader.hpp"
 #include "VertexBuffer.hpp"
@@ -31,8 +32,6 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include "stb_image.h"
-#include "stb_image_write.h"
 #include "utils.hpp"
 
 static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
@@ -46,6 +45,9 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
 int main(int argc, char** argv)
 {
     Window window(1280, 720, "OpenGL Test", argc <= 3);
+
+    std::string filePath = argc < 2 ? "../images/p1.jpg" : argv[1];
+    Image img(filePath);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -68,15 +70,6 @@ int main(int argc, char** argv)
     else
         LOG("glDebugMessageCallback not available.");
 
-    std::string filePath = argc < 2 ? "../images/p1.jpg" : argv[1];
-    int img_w, img_h, img_channels;
-    stbi_set_flip_vertically_on_load(true);
-    uint8_t* img =
-        stbi_load(filePath.c_str(), &img_w, &img_h, &img_channels, 0);
-
-    if (!img) throw std::runtime_error("stbi_load() failed!");
-    assert(img_channels == 3);
-
     uint tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -91,11 +84,10 @@ int main(int argc, char** argv)
                     GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img_w, img_h, 0, GL_RGB,
-                 GL_UNSIGNED_BYTE, img);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, img.data());
 
-    stbi_image_free(img);
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     // Rectangle (two triangles) covering the screen.
     constexpr int stride = 3;
@@ -120,7 +112,7 @@ int main(int argc, char** argv)
         // proportion of the missing sphere that's below the horizon
         double m = 1;
         if (argc >= 3) m = std::stod(argv[2]);
-        double u = (double)img_w / 2 / (double)img_h;
+        double u = (double)img.width() / 2 / (double)img.height();
         float v_n = (float)(u * M_1_PI);
         float v_b = (float)(u / 2 + (1 - u) * m);
         shader.setFloat("v_norm", v_n);
@@ -298,17 +290,14 @@ int main(int argc, char** argv)
         }
     }
 
-    int w, h;
-    glfwGetFramebufferSize(window.get(), &w, &h);
-    LOG("WH: ", w, " ", h);
+    auto [w, h] = window.frameBufferShape();
+    LOG("Frame buffer shape: ", w, " ", h);
 
-    auto imgOut = std::make_unique<uint8_t[]>(static_cast<size_t>(w * h * 3));
-    assert(imgOut.get());
-
-    // glReadBuffer(GL_BACK);
-    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, imgOut.get());
-    stbi_flip_vertically_on_write(true);
-    stbi_write_jpg("out.jpg", w, h, 3, imgOut.get(), 90);
+    {
+        Image frame(w, h, 3);
+        glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, frame.data());
+        frame.write("out.jpg");
+    }
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
