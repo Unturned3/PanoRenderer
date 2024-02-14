@@ -146,7 +146,7 @@ int main(int argc, char** argv)
     glm::vec3 prev_pose {0, 0, 75};
     glm::vec3 prev_vel {0, 0, 0};
 
-    while (glfwWindowShouldClose(window.get()) == 0) {
+    while (!window.shouldClose()) {
         // Compute fps
         frame_cnt++;
         fps_sum += io.Framerate;
@@ -275,7 +275,7 @@ int main(int argc, char** argv)
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
 
-        glfwSwapBuffers(window.get());
+        window.swapBuffers();
 
         if (!window.visible()) {
             /*
@@ -285,7 +285,7 @@ int main(int argc, char** argv)
             some platforms (because it read the other buffer which was not
             rendered to yet).
             */
-            glfwSwapBuffers(window.get());
+            window.swapBuffers();
             break;
         }
     }

@@ -74,6 +74,10 @@ public:
         return {w, h};
     }
 
+    bool shouldClose() { return glfwWindowShouldClose(window_); }
+
+    void swapBuffers() { glfwSwapBuffers(window_); }
+
     void processInput()
     {
         glfwPollEvents();
