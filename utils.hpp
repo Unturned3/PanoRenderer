@@ -67,13 +67,13 @@ void probe_OpenGL_properties()
     LOG("Max rectangular texture size: ", maxRectTexSize);
 }
 
-std::string pretty_matrix(const float* a, size_t n, size_t m, int sig_figs,
+std::string pretty_matrix(const float* a, int n, int m, int sig_figs,
                           bool col_major = true)
 {
     std::stringstream s;
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t j = 0; j < m; ++j) {
-            size_t k = col_major ? (j * m + i) : (i * m + j);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            int k = col_major ? (j * m + i) : (i * m + j);
             s << std::fixed << std::setprecision(sig_figs)
               << std::setw(sig_figs + 4) << *(a + k);
         }

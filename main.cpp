@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "AppState.hpp"
 #include "IndexBuffer.hpp"
 #include "Shader.hpp"
 #include "VertexBuffer.hpp"
@@ -42,23 +43,9 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
     LOG(msg);
 }
 
-void keyCallback_(GLFWwindow* window, int key, int scancode, int action,
-                  int mods);
-void processInput(GLFWwindow* window);
-
-float fov = 75.0f;
-float max_fov = 120.0f;
-bool showUI = true, randomTrajectory = false;
-
-glm::mat4 M_rot {1.0f};
-glm::vec3 front, up, right;
-
 int main(int argc, char** argv)
 {
-    const int w_w = 1280, w_h = 720;
-    Window window(w_w, w_h, "OpenGL Test", argc <= 3);
-    glfwSetKeyCallback(window.get(), keyCallback_);
-    glfwSwapInterval(1);
+    Window window(1280, 720, "OpenGL Test", argc <= 3);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -203,12 +190,12 @@ int main(int argc, char** argv)
         prev_pose = pose;
         prev_vel = vel;
 
-        if (randomTrajectory) {
+        AppState& s = AppState::get();
+        if (s.randomTrajectory) {
             {
-                front = {0, 0, -1};
-                up = glm::vec3(glm::row(M_rot, 1));
-                right = glm::cross(front, up);
-                glm::vec3 right_ = glm::normalize(right);
+                s.up = glm::vec3(glm::row(s.M_rot, 1));
+                s.right = glm::cross(s.front, s.up);
+                glm::vec3 right_ = glm::normalize(s.right);
 
                 /*
                 fov += vel.z;
@@ -217,33 +204,32 @@ int main(int argc, char** argv)
                 */
 
                 // M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
-                M_rot = glm::rotate(M_rot, glm::radians(vel.x), right_);
-                M_rot = glm::rotate(M_rot, glm::radians(vel.y), up);
+                s.M_rot = glm::rotate(s.M_rot, glm::radians(vel.x), right_);
+                s.M_rot = glm::rotate(s.M_rot, glm::radians(vel.y), s.up);
             }
         }
 
         // Process input
-        glfwPollEvents();
-        processInput(window.get());
+        window.processInput();
 
         // Clear frame
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Recalculate FoV, LoD, perspective, & view.
         float fov_thresh = 75.0f;
-        if (fov <= fov_thresh)
+        if (s.fov <= fov_thresh)
             shader.setFloat("lod", 0.0f);
         else
-            shader.setFloat("lod",
-                            (fov - fov_thresh) / (max_fov - fov_thresh) + 1.0f);
+            shader.setFloat(
+                "lod", (s.fov - fov_thresh) / (s.max_fov - fov_thresh) + 1.0f);
 
-        glm::mat4 M_proj = glm::perspective(
-            glm::radians(fov), (float)w_w / (float)w_h, 0.1f, 2.0f);
+        glm::mat4 M_proj = glm::perspective(glm::radians(s.fov),
+                                            window.aspect_ratio(), 0.1f, 2.0f);
         shader.setMat4("proj", M_proj);
 
         glm::mat4 M_view =
-            glm::lookAt(glm::vec3(0), -glm::vec3(glm::column(M_rot, 2)),
-                        glm::vec3(glm::column(M_rot, 1)));
+            glm::lookAt(glm::vec3(0), -glm::vec3(glm::column(s.M_rot, 2)),
+                        glm::vec3(glm::column(s.M_rot, 1)));
         shader.setMat4("view", M_view);
 
         // Draw projected panorama
@@ -253,7 +239,7 @@ int main(int argc, char** argv)
                      static_cast<int>(vertices.size() / stride));
 
         // Declare UI
-        if (showUI) {
+        if (s.showUI) {
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
@@ -263,21 +249,22 @@ int main(int argc, char** argv)
                              ImGuiWindowFlags_NoFocusOnAppearing |
                                  ImGuiWindowFlags_NoScrollbar);
                 ImGui::Text("Pitch: %.1f°, Yaw: %.1f°, FoV: %.0f°", 0.0f, 0.0f,
-                            fov);
+                            s.fov);
                 ImGui::Text("Average %.2f ms/frame (%.1f FPS)", 1000.0f / fps,
                             fps);
                 // ImGui::Text("Window focused: %s", ImGui::IsWindowFocused());
                 ImGui::Text("M_rot: ");
                 ImGui::SameLine();
-                ImGui::Text("%s",
-                            utils::pretty_matrix(glm::value_ptr(M_rot), 4, 4, 2)
-                                .c_str());
-                ImGui::Text("|right|: %f", glm::length(right));
+                ImGui::Text(
+                    "%s", utils::pretty_matrix(glm::value_ptr(s.M_rot), 4, 4, 2)
+                              .c_str());
+                ImGui::Text("|right|: %f", glm::length(s.right));
                 ImGui::Text("accel: %s", glm::to_string(accel).c_str());
                 ImGui::Text("vel: %s", glm::to_string(vel).c_str());
                 ImGui::Text("pose: %s", glm::to_string(pose).c_str());
 
-                ImGui::Checkbox("Enable random trajectory", &randomTrajectory);
+                ImGui::Checkbox("Enable random trajectory",
+                                &s.randomTrajectory);
 
                 if (ImGui::Button("Randomize rotation")) {
                     float pitch = glm::linearRand(-50.0f, 50.0f);
@@ -286,7 +273,7 @@ int main(int argc, char** argv)
                     n = glm::rotate(n, glm::radians(pitch), {1, 0, 0});
                     n = glm::rotate(n, glm::radians(yaw),
                                     glm::vec3(glm::row(n, 1)));
-                    M_rot = n;
+                    s.M_rot = n;
                 }
                 ImGui::End();
             }
@@ -329,47 +316,4 @@ int main(int argc, char** argv)
     ImGui::DestroyContext();
 
     return 0;
-}
-
-void keyCallback_(GLFWwindow* window, int key, int scancode, int action,
-                  int mods)
-{
-    if (action == GLFW_PRESS) {
-        if (key == GLFW_KEY_H) showUI = !showUI;
-    }
-}
-
-void processInput(GLFWwindow* window)
-{
-    front = {0, 0, -1};
-    up = glm::vec3(glm::row(M_rot, 1));
-
-    // normalized projection of the intrinsic x axis
-    // onto the extrinsic xz plane.
-    // This has a problem: when the camera looks straight up or down,
-    // up and front will be parallel, resulting in a cross product with
-    // zero magnitude, getting the camera stuck.
-    right = glm::cross(front, up);
-    glm::vec3 right_ = glm::normalize(right);
-
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) fov -= 1;
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) fov += 1;
-
-    fov = std::min(max_fov, fov);
-    fov = std::max(10.0f, fov);
-
-    float rot_a = 1.2f - (max_fov - fov) / max_fov;
-
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(rot_a), front);
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(rot_a), right_);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(-rot_a), right_);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(rot_a), up);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        M_rot = glm::rotate(M_rot, glm::radians(-rot_a), up);
 }
