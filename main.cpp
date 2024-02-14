@@ -11,17 +11,17 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/random.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 #include <iostream>
 #include <memory>
-#include <string>
-#include <vector>
-#include <thread>
 #include <random>
+#include <string>
+#include <thread>
 #include <utility>
+#include <vector>
 
 #include "IndexBuffer.hpp"
 #include "Shader.hpp"
@@ -184,27 +184,26 @@ int main(int argc, char** argv)
 
         // Calculate trajectory update
         glm::vec2 pitch_yaw_accel {
-            glm::gaussRand(mean_pitch_accel, 1.0f) / 1.5, // pitch
-            glm::gaussRand(0.0f, 1.0f), // yaw
+            glm::gaussRand(mean_pitch_accel, 1.0f) / 1.5,  // pitch
+            glm::gaussRand(0.0f, 1.0f),                    // yaw
         };
         glm::vec3 accel {
             glm::normalize(pitch_yaw_accel) * pose_accel_m,
-            glm::gaussRand(mean_focal_accel, 1.0f) * focal_accel_m, // focal
+            glm::gaussRand(mean_focal_accel, 1.0f) * focal_accel_m,  // focal
         };
 
-            // Update trajectory
-            glm::vec3 vel = prev_vel + accel * delta;
+        // Update trajectory
+        glm::vec3 vel = prev_vel + accel * delta;
 
-            if (glm::length(vel) > max_vel)
-                vel = max_vel * glm::normalize(vel);
+        if (glm::length(vel) > max_vel) vel = max_vel * glm::normalize(vel);
 
-            glm::vec3 pose {prev_pose + vel * delta};
+        glm::vec3 pose {prev_pose + vel * delta};
 
-            mean_pitch_accel = -pose.x / 2;
-            mean_focal_accel = (55 - pose.z) / 35;
+        mean_pitch_accel = -pose.x / 2;
+        mean_focal_accel = (55 - pose.z) / 35;
 
-            prev_pose = pose;
-            prev_vel = vel;
+        prev_pose = pose;
+        prev_vel = vel;
 
         if (randomTrajectory) {
             {
@@ -219,7 +218,7 @@ int main(int argc, char** argv)
                 fov = std::max(10.0f, fov);
                 */
 
-                //M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
+                // M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
                 M_rot = glm::rotate(M_rot, glm::radians(vel.x), right_);
                 M_rot = glm::rotate(M_rot, glm::radians(vel.y), up);
             }
@@ -286,8 +285,9 @@ int main(int argc, char** argv)
                     float pitch = glm::linearRand(-50.0f, 50.0f);
                     float yaw = glm::linearRand(-180.0f, 180.0f);
                     glm::mat4 n {1.0f};
-                    n = glm::rotate(n, glm::radians(pitch), {1,0,0});
-                    n = glm::rotate(n, glm::radians(yaw), glm::vec3(glm::row(n,1)));
+                    n = glm::rotate(n, glm::radians(pitch), {1, 0, 0});
+                    n = glm::rotate(n, glm::radians(yaw),
+                                    glm::vec3(glm::row(n, 1)));
                     M_rot = n;
                 }
                 ImGui::End();
@@ -337,8 +337,7 @@ void keyCallback_(GLFWwindow* window, int key, int scancode, int action,
                   int mods)
 {
     if (action == GLFW_PRESS) {
-        if (key == GLFW_KEY_H)
-            showUI = !showUI;
+        if (key == GLFW_KEY_H) showUI = !showUI;
     }
 }
 
