@@ -11,12 +11,6 @@
 
 class AppState {
 public:
-    static AppState& get()
-    {
-        static AppState s;
-        return s;
-    }
-
     float fov = 75.0f;
     float max_fov = 120.0f;
     bool showUI = true;
@@ -26,6 +20,16 @@ public:
     glm::vec3 front {0, 0, -1};
     glm::vec3 up {0};
     glm::vec3 right {0};
+
+    int frame_cnt = 0;
+    float fps_sum = 0;
+    float fps = 1;
+
+    static AppState& get()
+    {
+        static AppState s;
+        return s;
+    }
 
     AppState(const AppState& o) = delete;
     AppState& operator=(const AppState& o) = delete;

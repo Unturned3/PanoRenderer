@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "AppState.hpp"
+#include "GUI.hpp"
 #include "Image.hpp"
 #include "IndexBuffer.hpp"
 #include "Shader.hpp"
@@ -49,26 +50,14 @@ int main(int argc, char** argv)
     std::string filePath = argc < 2 ? "../images/p1.jpg" : argv[1];
     Image img(filePath);
 
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window.get(), true);
-    ImGui_ImplOpenGL3_Init("#version 150");
-
     if (glewInit() != GLEW_OK) throw std::runtime_error("GLEW init failed.");
 
     if (GLEW_KHR_debug)
         glDebugMessageCallback(glErrorCallback_, nullptr);
     else
         LOG("glDebugMessageCallback not available.");
+
+    GUI gui(window);
 
     uint tex;
     glGenTextures(1, &tex);
@@ -130,10 +119,6 @@ int main(int argc, char** argv)
     vb.bind();
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
-    int frame_cnt = 0;
-    float fps_sum = 0;
-    float fps = 1;
-
     // Trajectory generation parameters
     float focal_accel_m = 5;
     float pose_accel_m = 3;
@@ -147,18 +132,11 @@ int main(int argc, char** argv)
     glm::vec3 prev_vel {0, 0, 0};
 
     while (!window.shouldClose()) {
-        // Compute fps
-        frame_cnt++;
-        fps_sum += io.Framerate;
-        {
-            int limit = (int)fps / 10 + 1;
-            if (frame_cnt == limit) {
-                fps = fps_sum / (float)limit;
-                frame_cnt = 0;
-                fps_sum = 0;
-            }
-        }
+        AppState& s = AppState::get();
 
+        gui.update();
+
+        /*
         // Calculate trajectory update
         glm::vec2 pitch_yaw_accel {
             glm::gaussRand(mean_pitch_accel, 1.0f) / 1.5,  // pitch
@@ -189,19 +167,13 @@ int main(int argc, char** argv)
                 s.right = glm::cross(s.front, s.up);
                 glm::vec3 right_ = glm::normalize(s.right);
 
-                /*
-                fov += vel.z;
-                fov = std::min(max_fov, fov);
-                fov = std::max(10.0f, fov);
-                */
-
                 // M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
                 s.M_rot = glm::rotate(s.M_rot, glm::radians(vel.x), right_);
                 s.M_rot = glm::rotate(s.M_rot, glm::radians(vel.y), s.up);
             }
         }
+        */
 
-        // Process input
         window.processInput();
 
         // Clear frame
@@ -230,50 +202,7 @@ int main(int argc, char** argv)
         glDrawArrays(GL_TRIANGLES, 0,
                      static_cast<int>(vertices.size() / stride));
 
-        // Declare UI
-        if (s.showUI) {
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-            {
-                // ImGui::SetNextWindowSize(ImVec2(270, 80));
-                ImGui::Begin("Debug Info (Press H to hide/show)", nullptr,
-                             ImGuiWindowFlags_NoFocusOnAppearing |
-                                 ImGuiWindowFlags_NoScrollbar);
-                ImGui::Text("Pitch: %.1f°, Yaw: %.1f°, FoV: %.0f°", 0.0f, 0.0f,
-                            s.fov);
-                ImGui::Text("Average %.2f ms/frame (%.1f FPS)", 1000.0f / fps,
-                            fps);
-                // ImGui::Text("Window focused: %s", ImGui::IsWindowFocused());
-                ImGui::Text("M_rot: ");
-                ImGui::SameLine();
-                ImGui::Text(
-                    "%s", utils::pretty_matrix(glm::value_ptr(s.M_rot), 4, 4, 2)
-                              .c_str());
-                ImGui::Text("|right|: %f", glm::length(s.right));
-                ImGui::Text("accel: %s", glm::to_string(accel).c_str());
-                ImGui::Text("vel: %s", glm::to_string(vel).c_str());
-                ImGui::Text("pose: %s", glm::to_string(pose).c_str());
-
-                ImGui::Checkbox("Enable random trajectory",
-                                &s.randomTrajectory);
-
-                if (ImGui::Button("Randomize rotation")) {
-                    float pitch = glm::linearRand(-50.0f, 50.0f);
-                    float yaw = glm::linearRand(-180.0f, 180.0f);
-                    glm::mat4 n {1.0f};
-                    n = glm::rotate(n, glm::radians(pitch), {1, 0, 0});
-                    n = glm::rotate(n, glm::radians(yaw),
-                                    glm::vec3(glm::row(n, 1)));
-                    s.M_rot = n;
-                }
-                ImGui::End();
-            }
-
-            // Render UI
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        }
+        if (s.showUI) gui.render();
 
         window.swapBuffers();
 
@@ -298,11 +227,6 @@ int main(int argc, char** argv)
         glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, frame.data());
         frame.write("out.jpg");
     }
-
-    // Cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 
     return 0;
 }
