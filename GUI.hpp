@@ -50,13 +50,11 @@ public:
             "%s",
             utils::pretty_matrix(glm::value_ptr(s.M_rot), 4, 4, 2).c_str());
         ImGui::Text("|right|: %f", glm::length(s.right));
-        /*
-        ImGui::Text("accel: %s", glm::to_string(accel).c_str());
-        ImGui::Text("vel: %s", glm::to_string(vel).c_str());
-        ImGui::Text("pose: %s", glm::to_string(pose).c_str());
-        */
+        ImGui::Text("accel: %s", glm::to_string(s.accel).c_str());
+        ImGui::Text("vel: %s", glm::to_string(s.vel).c_str());
+        ImGui::Text("pose: %s", glm::to_string(s.pose).c_str());
 
-        ImGui::Checkbox("Enable random trajectory", &s.randomTrajectory);
+        ImGui::Checkbox("Enable random trajectory", &s.randomPose);
 
         if (ImGui::Button("Randomize rotation")) {
             float pitch = glm::linearRand(-50.0f, 50.0f);

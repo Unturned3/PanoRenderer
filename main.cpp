@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "Pose.hpp"
 #include "AppState.hpp"
 #include "GUI.hpp"
 #include "Image.hpp"
@@ -115,71 +116,18 @@ int main(int argc, char** argv)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float),
                           (void*)0);
-
     vb.bind();
+
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-
-    // Trajectory generation parameters
-    float focal_accel_m = 5;
-    float pose_accel_m = 3;
-    float delta = 1.0f / 60.0f;
-    float max_vel = 1;
-
-    float mean_pitch_accel = 0;
-    float mean_focal_accel = 0;
-
-    glm::vec3 prev_pose {0, 0, 75};
-    glm::vec3 prev_vel {0, 0, 0};
 
     while (!window.shouldClose()) {
         AppState& s = AppState::get();
 
+        updatePose();
+        window.processInput();
         gui.update();
 
-        /*
-        // Calculate trajectory update
-        glm::vec2 pitch_yaw_accel {
-            glm::gaussRand(mean_pitch_accel, 1.0f) / 1.5,  // pitch
-            glm::gaussRand(0.0f, 1.0f),                    // yaw
-        };
-        glm::vec3 accel {
-            glm::normalize(pitch_yaw_accel) * pose_accel_m,
-            glm::gaussRand(mean_focal_accel, 1.0f) * focal_accel_m,  // focal
-        };
-
-        // Update trajectory
-        glm::vec3 vel = prev_vel + accel * delta;
-
-        if (glm::length(vel) > max_vel) vel = max_vel * glm::normalize(vel);
-
-        glm::vec3 pose {prev_pose + vel * delta};
-
-        mean_pitch_accel = -pose.x / 2;
-        mean_focal_accel = (55 - pose.z) / 35;
-
-        prev_pose = pose;
-        prev_vel = vel;
-
-        AppState& s = AppState::get();
-        if (s.randomTrajectory) {
-            {
-                s.up = glm::vec3(glm::row(s.M_rot, 1));
-                s.right = glm::cross(s.front, s.up);
-                glm::vec3 right_ = glm::normalize(s.right);
-
-                // M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
-                s.M_rot = glm::rotate(s.M_rot, glm::radians(vel.x), right_);
-                s.M_rot = glm::rotate(s.M_rot, glm::radians(vel.y), s.up);
-            }
-        }
-        */
-
-        window.processInput();
-
-        // Clear frame
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // Recalculate FoV, LoD, perspective, & view.
+        // Recalculate LoD, perspective, & view.
         float fov_thresh = 75.0f;
         if (s.fov <= fov_thresh)
             shader.setFloat("lod", 0.0f);
@@ -195,6 +143,9 @@ int main(int argc, char** argv)
             glm::lookAt(glm::vec3(0), -glm::vec3(glm::column(s.M_rot, 2)),
                         glm::vec3(glm::column(s.M_rot, 1)));
         shader.setMat4("view", M_view);
+
+        // Clear frame
+        glClear(GL_COLOR_BUFFER_BIT);
 
         // Draw projected panorama
         glBindTexture(GL_TEXTURE_2D, tex);
