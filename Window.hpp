@@ -133,7 +133,7 @@ private:
     {
         AppState& s = AppState::get();
         if (action == GLFW_PRESS) {
-            if (key == GLFW_KEY_H) s.showUI = !s.showUI;
+            if (key == GLFW_KEY_H) s.drawUI = !s.drawUI;
         }
     }
 };

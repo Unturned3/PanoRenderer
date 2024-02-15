@@ -13,7 +13,7 @@ class AppState {
 public:
     float fov = 75.0f;
     float max_fov = 120.0f;
-    bool showUI = true;
+    bool drawUI = true;
     bool randomPose = false;
 
     glm::mat4 M_rot {1.0f};

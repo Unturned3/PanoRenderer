@@ -125,7 +125,6 @@ int main(int argc, char** argv)
 
         updatePose();
         window.processInput();
-        gui.update();
 
         // Recalculate LoD, perspective, & view.
         float fov_thresh = 75.0f;
@@ -153,7 +152,10 @@ int main(int argc, char** argv)
         glDrawArrays(GL_TRIANGLES, 0,
                      static_cast<int>(vertices.size() / stride));
 
-        if (s.showUI) gui.render();
+        if (s.drawUI) {
+            gui.update();
+            gui.render();
+        }
 
         window.swapBuffers();
 
