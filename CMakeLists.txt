@@ -31,6 +31,9 @@ target_link_libraries(main PRIVATE stb_image)
 add_subdirectory(imgui)
 target_link_libraries(main PRIVATE imgui)
 
+add_subdirectory(fmt)
+target_link_libraries(main PRIVATE fmt::fmt)
+
 get_os_name(OS_)
 get_linux_distro_name(DISTRO_)
 

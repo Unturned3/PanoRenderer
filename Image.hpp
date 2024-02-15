@@ -5,9 +5,9 @@
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
-#include <format>
 #include <string>
 
+#include "fmt/core.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
 
@@ -20,7 +20,7 @@ public:
         if (!data_) throw std::runtime_error("Failed to load image " + path);
         if (channels_ != 3)
             throw std::runtime_error(
-                std::format("Failed to load image {}. "
+                fmt::format("Failed to load image {}. "
                             "Expected {} channels, but got {}.",
                             path, 3, channels_));
     }
