@@ -219,10 +219,9 @@ int main(int argc, char** argv)
         }
     }
 
-    auto [w, h] = window.frameBufferShape();
-    LOG("Frame buffer shape: ", w, " ", h);
-
     {
+        auto [w, h] = window.frameBufferShape();
+        LOG("Frame buffer shape: ", w, " ", h);
         Image frame(w, h, 3);
         glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, frame.data());
         frame.write("out.jpg");
