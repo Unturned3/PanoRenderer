@@ -23,17 +23,15 @@ add_subdirectory(imgui)
 add_subdirectory(fmt)
 
 set(GL_components OpenGL)
-set(GL_libs OpenGL::GL)
 
 if(${OS_} STREQUAL Linux)
     set(OpenGL_GL_PREFERENCE GLVND)
     list(APPEND GL_components EGL GLX)
-    list(APPEND GL_libs OpenGL::EGL OpenGL::GLX)
 endif()
 
 find_package(OpenGL REQUIRED COMPONENTS ${GL_components})
 find_package(GLEW REQUIRED)
-find_package(glfw3 3.3 REQUIRED)
+find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
 
@@ -46,31 +44,34 @@ target_compile_features(main PRIVATE cxx_std_20)
 target_compile_options(main PRIVATE
     -Wall -Wextra -Wpedantic -Wconversion
     -Wno-unused-variable -Wno-unused-parameter
-    -O3
-    #-g3
-    #-Werror
+    -O3 #-g3 -Werror
 )
 
 target_link_libraries(main PRIVATE
-    stb_image imgui fmt::fmt
-    ${GL_libs} GLEW::glew glfw glm::glm
+    stb_image
+    imgui
+    fmt::fmt
+    OpenGL::GL
+    GLEW::glew
+    glfw
+    glm::glm
 )
 
 
 ### EGL executable (Linux only) ###
 
 if(${OS_} STREQUAL Linux)
+
     add_executable(egl egl.cpp)
+
     target_link_libraries(egl PRIVATE
-        fmt::fmt
-        OpenGL::EGL
-        OpenGL::GLX
         stb_image
         imgui
+        fmt::fmt
+        OpenGL::EGL
     )
 
-    # Use custom GLEW with EGL support
-    #target_include_directories(egl PRIVATE ${CMAKE_SOURCE_DIR}/glew-2.2.0/include/GL)
+    # Use GLEW built with EGL support
     target_link_libraries(egl PRIVATE ${CMAKE_SOURCE_DIR}/glew-2.2.0/lib/libGLEW.a)
 
     set_target_properties(egl PROPERTIES CXX_EXTENSIONS OFF)
@@ -78,10 +79,9 @@ if(${OS_} STREQUAL Linux)
     target_compile_options(egl PRIVATE
         -Wall -Wextra -Wpedantic -Wconversion
         -Wno-unused-variable -Wno-unused-parameter
-        -O3
-        #-g3
-        #-Werror
+        -O3 #-g3 -Werror
     )
+
 endif()
 
 
