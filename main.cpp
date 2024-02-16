@@ -23,11 +23,11 @@
 #include <utility>
 #include <vector>
 
-#include "Pose.hpp"
 #include "AppState.hpp"
 #include "GUI.hpp"
 #include "Image.hpp"
 #include "IndexBuffer.hpp"
+#include "Pose.hpp"
 #include "Shader.hpp"
 #include "VertexBuffer.hpp"
 #include "Window.hpp"

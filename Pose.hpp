@@ -15,7 +15,7 @@ void updatePose()
     // Calculate trajectory update
     glm::vec2 pitch_yaw_accel {
         glm::gaussRand(s.mean_pitch_accel, 1.0f) / 1.5,  // pitch
-        glm::gaussRand(0.0f, 1.0f),                    // yaw
+        glm::gaussRand(0.0f, 1.0f),                      // yaw
     };
     s.accel = {
         glm::normalize(pitch_yaw_accel) * s.pose_accel_m,
@@ -25,7 +25,8 @@ void updatePose()
     // Update trajectory
     s.vel = s.prev_vel + s.accel * s.delta;
 
-    if (glm::length(s.vel) > s.max_vel) s.vel = s.max_vel * glm::normalize(s.vel);
+    if (glm::length(s.vel) > s.max_vel)
+        s.vel = s.max_vel * glm::normalize(s.vel);
 
     s.pose = s.prev_pose + s.vel * s.delta;
 
