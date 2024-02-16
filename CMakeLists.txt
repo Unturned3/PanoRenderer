@@ -63,8 +63,16 @@ if(${OS_} STREQUAL Linux)
     add_executable(egl egl.cpp)
     target_link_libraries(egl PRIVATE
         fmt::fmt
-        OpenGL::EGL GLEW::glew
+        OpenGL::EGL
+        OpenGL::GLX
+        stb_image
+        imgui
     )
+
+    # Use custom GLEW with EGL support
+    #target_include_directories(egl PRIVATE ${CMAKE_SOURCE_DIR}/glew-2.2.0/include/GL)
+    target_link_libraries(egl PRIVATE ${CMAKE_SOURCE_DIR}/glew-2.2.0/lib/libGLEW.a)
+
     set_target_properties(egl PROPERTIES CXX_EXTENSIONS OFF)
     target_compile_features(egl PRIVATE cxx_std_20)
     target_compile_options(egl PRIVATE
