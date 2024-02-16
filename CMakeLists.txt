@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.7...3.27)
+cmake_minimum_required(VERSION 3.21...3.28)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -37,12 +37,17 @@ target_link_libraries(main PRIVATE fmt::fmt)
 get_os_name(OS_)
 get_linux_distro_name(DISTRO_)
 
+set(GL_components OpenGL)
+set(GL_libs OpenGL::GL)
+
 if(${OS_} STREQUAL Linux)
     set(OpenGL_GL_PREFERENCE GLVND)
+    list(APPEND GL_components EGL GLX)
+    list(APPEND GL_libs OpenGL::EGL OpenGL::GLX)
 endif()
 
-find_package(OpenGL REQUIRED)
-target_link_libraries(main PRIVATE OpenGL::GL)
+find_package(OpenGL REQUIRED COMPONENTS ${GL_components})
+target_link_libraries(main PRIVATE ${GL_libs})
 
 find_package(GLEW REQUIRED)
 target_link_libraries(main PRIVATE GLEW::glew)
