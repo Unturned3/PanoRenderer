@@ -46,7 +46,7 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
 
 int main(int argc, char** argv)
 {
-    Window window(1280, 720, "OpenGL Test", argc <= 3);
+    Window window(1280, 720, "OpenGL Test");
 
     std::string filePath = argc < 2 ? "../images/p1.jpg" : argv[1];
     Image img(filePath);
@@ -158,18 +158,6 @@ int main(int argc, char** argv)
         }
 
         window.swapBuffers();
-
-        if (!window.visible()) {
-            /*
-            Swap again so both the front and back buffer is guaranteed to
-            contain the latest frame, which is then read by glReadPixels
-            below. If we omit this, glReadPixels may return an empty frame on
-            some platforms (because it read the other buffer which was not
-            rendered to yet).
-            */
-            window.swapBuffers();
-            break;
-        }
     }
 
     {

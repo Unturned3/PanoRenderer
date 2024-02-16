@@ -1,5 +1,7 @@
 
 #pragma once
+
+#include <EGL/egl.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -9,11 +11,108 @@
 #include "AppState.hpp"
 #include "utils.hpp"
 
+
+#define USE_EGL
+
+#ifdef USE_EGL
+
 class Window {
 public:
-    Window(int width, int height, const std::string& name, bool visible = true,
-           bool resizable = false, int gl_major_ver = 4, int gl_minor_ver = 1)
-        : width_(width), height_(height), name_(name), visible_(visible)
+    Window(int width, int height, std::string const& name)
+        : width_(width), height_(height), name_(name)
+    {
+
+
+        eglDisp_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+        if (!eglDisp_) throw std::runtime_error("EGL failed to get display.");
+        eglInitialize(eglDisp_, &major_, &minor_);
+
+        int nConfigs;
+        eglChooseConfig(eglDisp_, eglConfigAttrs_, &eglConfig_, 1, &nConfigs);
+        assert(nConfigs == 1 && "EGL returned more than one config.");
+
+        const EGLint pbufAttrs[] = {
+            EGL_WIDTH,  width,
+            EGL_HEIGHT, height,
+            EGL_NONE,
+        };
+        eglSurf_ = eglCreatePbufferSurface(eglDisp_, eglConfig_, pbufAttrs);
+        if (!eglSurf_) throw std::runtime_error("EGL failed to create surface.");
+
+        eglBindAPI(EGL_OPENGL_API);
+
+        eglCtx_ =
+            eglCreateContext(eglDisp_, eglConfig_, EGL_NO_CONTEXT, nullptr);
+        if (!eglCtx_) throw std::runtime_error("EGL failed to create context.");
+
+        eglMakeCurrent(eglDisp_, eglSurf_, eglSurf_, eglCtx_);
+
+        GLenum ret = glewInit();
+        if (ret != GLEW_OK) {
+            std::cerr << glewGetErrorString(ret) << std::endl;;
+            throw std::runtime_error("GLEW init failed.");
+        }
+    }
+
+    ~Window()
+    {
+        eglTerminate(eglDisp_);
+    }
+
+    Window(const Window& o) = delete;
+    Window& operator=(const Window& o) = delete;
+
+    int width() const { return width_; }
+
+    int height() const { return height_; }
+
+    float aspect_ratio() const
+    {
+        return static_cast<float>(width_) / static_cast<float>(height_);
+    }
+
+    const std::string& name() const { return name_; }
+
+    std::pair<int, int> frameBufferShape() { return {width_, height_}; }
+
+    bool shouldClose() { return false; }
+
+    void swapBuffers() {}
+
+    void processInput() {}
+
+private:
+    int width_, height_;
+    std::string const& name_;
+
+    EGLDisplay eglDisp_;
+    EGLint major_, minor_;
+    EGLConfig eglConfig_;
+    EGLSurface eglSurf_;
+    EGLContext eglCtx_;
+
+    // clang-format off
+    static const EGLint eglConfigAttrs_[] = {
+        EGL_SURFACE_TYPE,    EGL_PBUFFER_BIT,
+        EGL_BLUE_SIZE,       8,
+        EGL_GREEN_SIZE,      8,
+        EGL_RED_SIZE,        8,
+        EGL_DEPTH_SIZE,      8,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+        EGL_NONE,
+    };
+    // clang-format on
+};
+
+#endif  // #ifdef USE_EGL
+
+
+#ifndef USE_EGL
+
+class Window {
+public:
+    Window(int width, int height, const std::string& name)
+        : width_(width), height_(height), name_(name)
     {
         glfwSetErrorCallback(Window::errorCallback);
 
@@ -21,16 +120,16 @@ public:
             throw std::runtime_error("GLFW failed to initialize.");
 
         glfwDefaultWindowHints();
-        glfwWindowHint(GLFW_VISIBLE, visible);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, gl_major_ver);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor_ver);
+        glfwWindowHint(GLFW_VISIBLE, true);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
 #ifdef __APPLE__
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_RESIZABLE, resizable);
+        glfwWindowHint(GLFW_RESIZABLE, false);
 
         window_ =
             glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
@@ -137,3 +236,5 @@ private:
         }
     }
 };
+
+#endif  // #ifndef USE_EGL

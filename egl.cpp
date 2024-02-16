@@ -5,7 +5,6 @@
 #include "fmt/core.h"
 #include "utils.hpp"
 
-
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -41,25 +40,6 @@
 #include "imgui_impl_opengl3.h"
 */
 #include "utils.hpp"
-
-// clang-format off
-static const EGLint eglConfigAttrs[] = {
-    EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
-    EGL_BLUE_SIZE, 8,
-    EGL_GREEN_SIZE, 8,
-    EGL_RED_SIZE, 8,
-    EGL_DEPTH_SIZE, 8,
-    EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-    EGL_NONE,
-};
-// clang-format on
-
-static const int pbufferWidth = 1280;
-static const int pbufferHeight = 720;
-
-static const EGLint pbufAttrs[] = {
-    EGL_WIDTH, pbufferWidth, EGL_HEIGHT, pbufferHeight, EGL_NONE,
-};
 
 int main(int argc, char *argv[])
 {
