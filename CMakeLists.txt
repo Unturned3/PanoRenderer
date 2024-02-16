@@ -72,7 +72,7 @@ if(${OS_} STREQUAL Linux)
     )
 
     # Use GLEW built with EGL support
-    target_link_libraries(egl PRIVATE ${CMAKE_SOURCE_DIR}/glew-2.2.0/lib/libGLEW.a)
+    target_link_libraries(egl PRIVATE ${CMAKE_SOURCE_DIR}/libGLEW.a)
 
     set_target_properties(egl PROPERTIES CXX_EXTENSIONS OFF)
     target_compile_features(egl PRIVATE cxx_std_20)
