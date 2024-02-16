@@ -1,6 +1,9 @@
 
 #include <EGL/egl.h>
 
+#include "fmt/core.h"
+#include "utils.hpp"
+
 // clang-format off
 static const EGLint eglConfigAttrs[] = {
     EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
@@ -28,6 +31,7 @@ int main(int argc, char *argv[])
     EGLint major, minor;
 
     eglInitialize(eglDpy, &major, &minor);
+    LOG(fmt::format("EGL version: {}.{}", major, minor));
 
     // 2. Select an appropriate configuration
     EGLint numConfigs;

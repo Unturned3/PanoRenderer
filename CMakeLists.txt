@@ -61,7 +61,19 @@ target_link_libraries(main PRIVATE
 
 if(${OS_} STREQUAL Linux)
     add_executable(egl egl.cpp)
-    target_link_libraries(egl PRIVATE OpenGL::EGL)
+    target_link_libraries(egl PRIVATE
+        fmt::fmt
+        OpenGL::EGL GLEW::glew
+    )
+    set_target_properties(egl PROPERTIES CXX_EXTENSIONS OFF)
+    target_compile_features(egl PRIVATE cxx_std_20)
+    target_compile_options(egl PRIVATE
+        -Wall -Wextra -Wpedantic -Wconversion
+        -Wno-unused-variable -Wno-unused-parameter
+        -O3
+        #-g3
+        #-Werror
+    )
 endif()
 
 
