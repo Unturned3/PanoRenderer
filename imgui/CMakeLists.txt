@@ -24,5 +24,8 @@ target_sources(imgui PRIVATE
     misc/cpp/imgui_stdlib.cpp
 )
 
-target_compile_features(main PRIVATE cxx_std_11)
-target_compile_options(main PRIVATE -Wall -Wformat -O3)
+target_compile_features(imgui PRIVATE cxx_std_11)
+target_compile_options(imgui PRIVATE
+    -Wall -Wformat -O3
+    -Wno-strict-aliasing    # Added by Richard
+)

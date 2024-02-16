@@ -13,6 +13,32 @@ include(utils)
 
 prevent_in_src_build()
 
+# Get info about build environment
+get_os_name(OS_)
+get_linux_distro_name(DISTRO_)
+
+
+add_subdirectory(stb_image)
+add_subdirectory(imgui)
+add_subdirectory(fmt)
+
+set(GL_components OpenGL)
+set(GL_libs OpenGL::GL)
+
+if(${OS_} STREQUAL Linux)
+    set(OpenGL_GL_PREFERENCE GLVND)
+    list(APPEND GL_components EGL GLX)
+    list(APPEND GL_libs OpenGL::EGL OpenGL::GLX)
+endif()
+
+find_package(OpenGL REQUIRED COMPONENTS ${GL_components})
+find_package(GLEW REQUIRED)
+find_package(glfw3 3.3 REQUIRED)
+find_package(glm REQUIRED)
+
+
+### Main executable ###
+
 add_executable(main main.cpp)
 
 set_target_properties(main PROPERTIES CXX_EXTENSIONS OFF)
@@ -25,39 +51,22 @@ target_compile_options(main PRIVATE
     #-Werror
 )
 
-add_subdirectory(stb_image)
-target_link_libraries(main PRIVATE stb_image)
+target_link_libraries(main PRIVATE
+    stb_image imgui fmt::fmt
+    ${GL_libs} GLEW::glew glfw glm::glm
+)
 
-add_subdirectory(imgui)
-target_link_libraries(main PRIVATE imgui)
 
-add_subdirectory(fmt)
-target_link_libraries(main PRIVATE fmt::fmt)
-
-get_os_name(OS_)
-get_linux_distro_name(DISTRO_)
-
-set(GL_components OpenGL)
-set(GL_libs OpenGL::GL)
+### EGL executable (Linux only) ###
 
 if(${OS_} STREQUAL Linux)
-    set(OpenGL_GL_PREFERENCE GLVND)
-    list(APPEND GL_components EGL GLX)
-    list(APPEND GL_libs OpenGL::EGL OpenGL::GLX)
+    add_executable(egl egl.cpp)
+    target_link_libraries(egl PRIVATE OpenGL::EGL)
 endif()
 
-find_package(OpenGL REQUIRED COMPONENTS ${GL_components})
-target_link_libraries(main PRIVATE ${GL_libs})
 
-find_package(GLEW REQUIRED)
-target_link_libraries(main PRIVATE GLEW::glew)
-
-find_package(glfw3 3.3 REQUIRED)
-target_link_libraries(main PRIVATE glfw)
-
-find_package(glm REQUIRED)
-if(${DISTRO_} STREQUAL arch)
-    target_link_libraries(main PRIVATE glm)
-else()
-    target_link_libraries(main PRIVATE glm::glm)
-endif()
+#if(${DISTRO_} STREQUAL arch)
+#    target_link_libraries(main PRIVATE glm)
+#else()
+#    target_link_libraries(main PRIVATE glm::glm)
+#endif()
