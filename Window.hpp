@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <EGL/egl.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -13,6 +12,8 @@
 
 
 #ifdef USE_EGL
+
+#include <EGL/egl.h>
 
 class Window {
 public:
