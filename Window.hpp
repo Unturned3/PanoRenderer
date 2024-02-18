@@ -12,8 +12,6 @@
 #include "utils.hpp"
 
 
-#define USE_EGL
-
 #ifdef USE_EGL
 
 class Window {
@@ -21,10 +19,9 @@ public:
     Window(int width, int height, std::string const& name)
         : width_(width), height_(height), name_(name)
     {
-
-
         eglDisp_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
         if (!eglDisp_) throw std::runtime_error("EGL failed to get display.");
+
         eglInitialize(eglDisp_, &major_, &minor_);
 
         int nConfigs;
@@ -36,6 +33,7 @@ public:
             EGL_HEIGHT, height,
             EGL_NONE,
         };
+
         eglSurf_ = eglCreatePbufferSurface(eglDisp_, eglConfig_, pbufAttrs);
         if (!eglSurf_) throw std::runtime_error("EGL failed to create surface.");
 
@@ -92,7 +90,7 @@ private:
     EGLContext eglCtx_;
 
     // clang-format off
-    static const EGLint eglConfigAttrs_[] = {
+    static constexpr EGLint eglConfigAttrs_[] = {
         EGL_SURFACE_TYPE,    EGL_PBUFFER_BIT,
         EGL_BLUE_SIZE,       8,
         EGL_GREEN_SIZE,      8,
@@ -140,6 +138,12 @@ public:
         glfwSetKeyCallback(window_, keyCallback_);
         glfwMakeContextCurrent(window_);
         glfwSwapInterval(1);
+
+        GLenum ret = glewInit();
+        if (ret != GLEW_OK) {
+            std::cerr << glewGetErrorString(ret) << std::endl;;
+            throw std::runtime_error("GLEW init failed.");
+        }
     }
 
     ~Window()

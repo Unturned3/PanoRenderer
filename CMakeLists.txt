@@ -64,6 +64,8 @@ if(${OS_} STREQUAL Linux)
 
     add_executable(egl egl.cpp)
 
+    target_compile_definitions(egl PRIVATE USE_EGL)
+
     target_link_libraries(egl PRIVATE
         stb_image
         imgui

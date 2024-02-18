@@ -33,8 +33,8 @@
 #include "Pose.hpp"
 #include "Shader.hpp"
 #include "VertexBuffer.hpp"
-/*
 #include "Window.hpp"
+/*
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -43,41 +43,7 @@
 
 int main(int argc, char *argv[])
 {
-
-    // 1. Initialize EGL
-    EGLDisplay eglDpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-
-    EGLint major, minor;
-
-    eglInitialize(eglDpy, &major, &minor);
-    LOG(fmt::format("EGL version: {}.{}", major, minor));
-
-    // 2. Select an appropriate configuration
-    EGLint numConfigs;
-    EGLConfig eglCfg;
-
-    eglChooseConfig(eglDpy, eglConfigAttrs, &eglCfg, 1, &numConfigs);
-
-    // 3. Create a surface
-    EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfg, pbufAttrs);
-
-    // 4. Bind the API
-    eglBindAPI(EGL_OPENGL_API);
-
-    // 5. Create a context and make it current
-    EGLContext eglCtx =
-        eglCreateContext(eglDpy, eglCfg, EGL_NO_CONTEXT, nullptr);
-
-    eglMakeCurrent(eglDpy, eglSurf, eglSurf, eglCtx);
-
-    // from now on use your OpenGL context
-
-    GLenum ret = glewInit();
-    if (ret != GLEW_OK) {
-        std::cout << glewGetErrorString(ret) << std::endl;
-        throw std::runtime_error("GLEW init failed.");
-    }
-    std::cout << "glewInit() OK" << std::endl;
+    Window window(1280, 720, "EGL + OpenGL");
 
     if (GLEW_KHR_debug)
         LOG("glDebugMessageCallback available.");
@@ -201,7 +167,5 @@ int main(int argc, char *argv[])
         frame.write("out.jpg");
     }
 
-    // 6. Terminate EGL when finished
-    eglTerminate(eglDpy);
     return 0;
 }
