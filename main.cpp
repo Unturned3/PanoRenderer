@@ -46,7 +46,11 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
 
 int main(int argc, char** argv)
 {
+#ifdef USE_EGL
+    HeadlessGLContext window(640, 480, "OpenGL Test");
+#else
     InteractiveGLContext window(640, 480, "OpenGL Test");
+#endif
 
     std::string filePath = argc < 2 ? "../images/p1.jpg" : argv[1];
     Image img(filePath);
@@ -58,7 +62,9 @@ int main(int argc, char** argv)
     else
         LOG("glDebugMessageCallback not available.");
 
+#ifndef USE_EGL
     GUI gui(window);
+#endif
 
     uint tex;
     glGenTextures(1, &tex);
@@ -124,7 +130,10 @@ int main(int argc, char** argv)
         AppState& s = AppState::get();
 
         updatePose();
+
+#ifndef USE_EGL
         window.handleKeyDown();
+#endif
 
         // Recalculate LoD, perspective, & view.
         float fov_thresh = 75.0f;
@@ -152,12 +161,22 @@ int main(int argc, char** argv)
         glDrawArrays(GL_TRIANGLES, 0,
                      static_cast<int>(vertices.size() / stride));
 
+#ifdef USE_EGL
+        auto [w, h] = window.framebufferShape();
+        Image frame(w, h, 3);
+        glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE,
+                        frame.data());
+        std::string name = "out.jpg";
+        frame.write(name);
+        LOG("frame saved to " + name);
+        break;
+#else
         if (s.drawUI) {
             gui.update();
             gui.render();
         }
-
         window.swapBuffers();
+#endif
     }
 
     return 0;

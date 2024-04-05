@@ -39,6 +39,10 @@ find_package(glm REQUIRED)
 
 add_executable(main main.cpp)
 
+if(${OS_} STREQUAL Linux)
+    set(USE_EGL TRUE)
+endif()
+
 set_target_properties(main PROPERTIES CXX_EXTENSIONS OFF)
 target_compile_features(main PRIVATE cxx_std_20)
 target_compile_options(main PRIVATE
@@ -46,49 +50,25 @@ target_compile_options(main PRIVATE
     -Wno-unused-variable -Wno-unused-parameter
     -O3 #-g3 -Werror
 )
+if(${USE_EGL})
+    target_compile_definitions(main PRIVATE USE_EGL)
+endif()
 
 target_link_libraries(main PRIVATE
     stb_image
     imgui
     fmt::fmt
     OpenGL::GL
-    GLEW::glew
     glfw
     glm::glm
 )
 
-
-### EGL executable (Linux only) ###
-
-if(${OS_} STREQUAL Linux)
-
-    add_executable(egl egl.cpp)
-
-    target_compile_definitions(egl PRIVATE USE_EGL)
-
-    target_link_libraries(egl PRIVATE
-        stb_image
-        imgui
-        fmt::fmt
+if(${USE_EGL})
+    target_link_libraries(main PRIVATE
         OpenGL::EGL
+        ${CMAKE_SOURCE_DIR}/libGLEW.a
     )
-
-    # Use GLEW built with EGL support
-    target_link_libraries(egl PRIVATE ${CMAKE_SOURCE_DIR}/libGLEW.a)
-
-    set_target_properties(egl PROPERTIES CXX_EXTENSIONS OFF)
-    target_compile_features(egl PRIVATE cxx_std_20)
-    target_compile_options(egl PRIVATE
-        -Wall -Wextra -Wpedantic -Wconversion
-        -Wno-unused-variable -Wno-unused-parameter
-        -O3 #-g3 -Werror
-    )
-
+else()
+    target_link_libraries(main PRIVATE GLEW::glew)
 endif()
 
-
-#if(${DISTRO_} STREQUAL arch)
-#    target_link_libraries(main PRIVATE glm)
-#else()
-#    target_link_libraries(main PRIVATE glm::glm)
-#endif()

@@ -41,19 +41,21 @@ public:
 
     virtual bool shouldClose() = 0;
 
-private:
+protected:
     int width_, height_;
     std::string name_;
 };
+
+
 
 #ifdef USE_EGL
 
 #include <EGL/egl.h>
 
-class Window {
+class HeadlessGLContext : public GLContext {
 public:
-    Window(int width, int height, std::string const& name)
-        : width_(width), height_(height), name_(name)
+    HeadlessGLContext(int width, int height, std::string const& name)
+        : GLContext(width, height, name)
     {
         eglDisp_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
         if (!eglDisp_) throw std::runtime_error("EGL failed to get display.");
@@ -87,34 +89,13 @@ public:
         }
     }
 
-    ~Window() { eglTerminate(eglDisp_); }
+    ~HeadlessGLContext() { eglTerminate(eglDisp_); }
 
-    Window(const Window& o) = delete;
-    Window& operator=(const Window& o) = delete;
+    std::pair<int, int> framebufferShape() override { return {width_, height_}; }
 
-    int width() const { return width_; }
-
-    int height() const { return height_; }
-
-    float aspect_ratio() const
-    {
-        return static_cast<float>(width_) / static_cast<float>(height_);
-    }
-
-    const std::string& name() const { return name_; }
-
-    std::pair<int, int> frameBufferShape() { return {width_, height_}; }
-
-    bool shouldClose() { return false; }
-
-    void swapBuffers() {}
-
-    void handleKeyDown() {}
+    bool shouldClose() override { return false; }
 
 private:
-    int width_, height_;
-    std::string const& name_;
-
     EGLDisplay eglDisp_;
     EGLint major_, minor_;
     EGLConfig eglConfig_;
@@ -134,7 +115,9 @@ private:
     // clang-format on
 };
 
-#else  // #ifdef USE_EGL
+
+#endif // #ifdef USE_EGL
+
 
 class InteractiveGLContext : public GLContext {
 public:
@@ -272,5 +255,3 @@ private:
         w->handleKeyPress(key, scancode, action, mods);
     }
 };
-
-#endif  // #ifndef USE_EGL
