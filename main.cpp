@@ -46,7 +46,7 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
 
 int main(int argc, char** argv)
 {
-    Window window(1280, 720, "OpenGL Test");
+    InteractiveGLContext window(640, 480, "OpenGL Test");
 
     std::string filePath = argc < 2 ? "../images/p1.jpg" : argv[1];
     Image img(filePath);
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
         AppState& s = AppState::get();
 
         updatePose();
-        window.processInput();
+        window.handleKeyDown();
 
         // Recalculate LoD, perspective, & view.
         float fov_thresh = 75.0f;
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
                 "lod", (s.fov - fov_thresh) / (s.max_fov - fov_thresh) + 1.0f);
 
         glm::mat4 M_proj = glm::perspective(glm::radians(s.fov),
-                                            window.aspect_ratio(), 0.1f, 2.0f);
+                                            window.aspectRatio(), 0.1f, 2.0f);
         shader.setMat4("proj", M_proj);
 
         glm::mat4 M_view =
@@ -158,14 +158,6 @@ int main(int argc, char** argv)
         }
 
         window.swapBuffers();
-    }
-
-    {
-        auto [w, h] = window.frameBufferShape();
-        LOG("Frame buffer shape: ", w, " ", h);
-        Image frame(w, h, 3);
-        glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, frame.data());
-        frame.write("out.jpg");
     }
 
     return 0;

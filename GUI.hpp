@@ -9,7 +9,7 @@
 
 class GUI {
 public:
-    GUI(Window& window)
+    GUI(InteractiveGLContext& window)
         : s(AppState::get()), window_(window), io_(ImGuiEarlyInit())
     {
         io_.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -76,7 +76,7 @@ public:
 
 public:
     AppState& s;
-    Window& window_;
+    InteractiveGLContext& window_;
     ImGuiIO& io_;
 
     static ImGuiIO& ImGuiEarlyInit()

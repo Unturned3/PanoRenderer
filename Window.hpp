@@ -8,8 +8,43 @@
 #include <utility>
 
 #include "AppState.hpp"
+#include "Image.hpp"
 #include "utils.hpp"
 
+class GLContext {
+public:
+    GLContext(int width, int height, const std::string& name)
+        : width_(width), height_(height), name_(name)
+    {
+    }
+
+    ~GLContext() = default;
+
+    GLContext(const GLContext&) = delete;
+    GLContext& operator=(const GLContext&) = delete;
+
+    GLContext(GLContext&&) = delete;
+    GLContext& operator=(GLContext&&) = delete;
+
+    int width() const { return width_; }
+
+    int height() const { return height_; }
+
+    float aspectRatio() const
+    {
+        return static_cast<float>(width_) / static_cast<float>(height_);
+    }
+
+    const std::string& name() const { return name_; }
+
+    virtual std::pair<int, int> framebufferShape() = 0;
+
+    virtual bool shouldClose() = 0;
+
+private:
+    int width_, height_;
+    std::string name_;
+};
 
 #ifdef USE_EGL
 
@@ -30,13 +65,12 @@ public:
         assert(nConfigs == 1 && "EGL returned more than one config.");
 
         const EGLint pbufAttrs[] = {
-            EGL_WIDTH,  width,
-            EGL_HEIGHT, height,
-            EGL_NONE,
+            EGL_WIDTH, width, EGL_HEIGHT, height, EGL_NONE,
         };
 
         eglSurf_ = eglCreatePbufferSurface(eglDisp_, eglConfig_, pbufAttrs);
-        if (!eglSurf_) throw std::runtime_error("EGL failed to create surface.");
+        if (!eglSurf_)
+            throw std::runtime_error("EGL failed to create surface.");
 
         eglBindAPI(EGL_OPENGL_API);
 
@@ -48,15 +82,12 @@ public:
 
         GLenum ret = glewInit();
         if (ret != GLEW_OK) {
-            std::cerr << glewGetErrorString(ret) << std::endl;;
+            std::cerr << glewGetErrorString(ret) << std::endl;
             throw std::runtime_error("GLEW init failed.");
         }
     }
 
-    ~Window()
-    {
-        eglTerminate(eglDisp_);
-    }
+    ~Window() { eglTerminate(eglDisp_); }
 
     Window(const Window& o) = delete;
     Window& operator=(const Window& o) = delete;
@@ -78,7 +109,7 @@ public:
 
     void swapBuffers() {}
 
-    void processInput() {}
+    void handleKeyDown() {}
 
 private:
     int width_, height_;
@@ -103,17 +134,14 @@ private:
     // clang-format on
 };
 
-#endif  // #ifdef USE_EGL
+#else  // #ifdef USE_EGL
 
-
-#ifndef USE_EGL
-
-class Window {
+class InteractiveGLContext : public GLContext {
 public:
-    Window(int width, int height, const std::string& name)
-        : width_(width), height_(height), name_(name)
+    InteractiveGLContext(int width, int height, const std::string& name)
+        : GLContext(width, height, name)
     {
-        glfwSetErrorCallback(Window::errorCallback);
+        glfwSetErrorCallback(InteractiveGLContext::errorCallback);
 
         if (glfwInit() == 0)
             throw std::runtime_error("GLFW failed to initialize.");
@@ -136,53 +164,40 @@ public:
         if (window_ == nullptr)
             throw std::runtime_error("GLFW failed to create window.");
 
-        glfwSetKeyCallback(window_, keyCallback_);
+        glfwSetWindowUserPointer(window_, this);
+        glfwSetKeyCallback(window_, InteractiveGLContext::keyCallback);
         glfwMakeContextCurrent(window_);
         glfwSwapInterval(1);
 
         GLenum ret = glewInit();
         if (ret != GLEW_OK) {
-            std::cerr << glewGetErrorString(ret) << std::endl;;
+            std::cerr << glewGetErrorString(ret) << std::endl;
             throw std::runtime_error("GLEW init failed.");
         }
     }
 
-    ~Window()
+    ~InteractiveGLContext()
     {
         glfwDestroyWindow(window_);
         glfwTerminate();
     }
 
-    Window(const Window& o) = delete;
-    Window& operator=(const Window& o) = delete;
-
     GLFWwindow* get() { return window_; }
-
-    int width() const { return width_; }
-
-    int height() const { return height_; }
-
-    float aspect_ratio() const
-    {
-        return static_cast<float>(width_) / static_cast<float>(height_);
-    }
 
     bool visible() const { return visible_; }
 
-    const std::string& name() const { return name_; }
+    void swapBuffers() { glfwSwapBuffers(window_); }
 
-    std::pair<int, int> frameBufferShape()
+    std::pair<int, int> framebufferShape() override
     {
         int w, h;
         glfwGetFramebufferSize(window_, &w, &h);
         return {w, h};
     }
 
-    bool shouldClose() { return glfwWindowShouldClose(window_); }
+    bool shouldClose() override { return glfwWindowShouldClose(window_); }
 
-    void swapBuffers() { glfwSwapBuffers(window_); }
-
-    void processInput()
+    void handleKeyDown()
     {
         glfwPollEvents();
         AppState& s = AppState::get();
@@ -218,6 +233,23 @@ public:
             s.M_rot = glm::rotate(s.M_rot, glm::radians(-rot_a), s.up);
     }
 
+    void handleKeyPress(int key, int scancode, int action, int mods)
+    {
+        AppState& s = AppState::get();
+        if (action == GLFW_PRESS) {
+            if (key == GLFW_KEY_H) s.drawUI = !s.drawUI;
+            if (key == GLFW_KEY_T) {
+                auto [w, h] = framebufferShape();
+                Image frame(w, h, 3);
+                glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE,
+                             frame.data());
+                std::string name = "out.jpg";
+                frame.write(name);
+                LOG("frame saved to " + name);
+            }
+        }
+    }
+
 private:
     GLFWwindow* window_;
     int width_, height_;
@@ -232,13 +264,12 @@ private:
         LOG(msg);
     }
 
-    static void keyCallback_(GLFWwindow* window, int key, int scancode,
-                             int action, int mods)
+    static void keyCallback(GLFWwindow* window, int key, int scancode,
+                            int action, int mods)
     {
-        AppState& s = AppState::get();
-        if (action == GLFW_PRESS) {
-            if (key == GLFW_KEY_H) s.drawUI = !s.drawUI;
-        }
+        auto w = static_cast<InteractiveGLContext*>(
+            glfwGetWindowUserPointer(window));
+        w->handleKeyPress(key, scancode, action, mods);
     }
 };
 

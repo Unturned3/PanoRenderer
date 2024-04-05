@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "AppState.hpp"
-//#include "GUI.hpp"
+// #include "GUI.hpp"
 #include "Image.hpp"
 #include "IndexBuffer.hpp"
 #include "Pose.hpp"
@@ -41,9 +41,9 @@
 */
 #include "utils.hpp"
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    Window window(1280, 720, "EGL + OpenGL");
+    InteractiveGLContext window(1280, 720, "EGL + OpenGL");
 
     if (GLEW_KHR_debug)
         LOG("glDebugMessageCallback available.");
@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
         LOG("glDebugMessageCallback not available.");
 
     utils::probe_OpenGL_properties();
-
 
     std::string filePath = argc < 2 ? "../images/p1.jpg" : argv[1];
     Image img(filePath);
@@ -120,7 +119,7 @@ int main(int argc, char *argv[])
         AppState& s = AppState::get();
 
         updatePose();
-        //window.processInput();
+        // window.checkKeyDown();
 
         // Recalculate LoD, perspective, & view.
         float fov_thresh = 75.0f;
@@ -130,8 +129,8 @@ int main(int argc, char *argv[])
             shader.setFloat(
                 "lod", (s.fov - fov_thresh) / (s.max_fov - fov_thresh) + 1.0f);
 
-        glm::mat4 M_proj = glm::perspective(glm::radians(s.fov),
-                                            (float)1280/(float)720, 0.1f, 2.0f);
+        glm::mat4 M_proj = glm::perspective(
+            glm::radians(s.fov), (float)1280 / (float)720, 0.1f, 2.0f);
         shader.setMat4("proj", M_proj);
 
         glm::mat4 M_view =
@@ -159,7 +158,7 @@ int main(int argc, char *argv[])
     }
 
     {
-        //auto [w, h] = window.frameBufferShape();
+        // auto [w, h] = window.frameBufferShape();
         auto [w, h] = std::pair<int, int> {1280, 720};
         LOG("Frame buffer shape: ", w, " ", h);
         Image frame(w, h, 3);
