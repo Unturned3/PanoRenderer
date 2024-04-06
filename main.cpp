@@ -164,8 +164,7 @@ int main(int argc, char** argv)
 #ifdef USE_EGL
         auto [w, h] = window.framebufferShape();
         Image frame(w, h, 3);
-        glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE,
-                        frame.data());
+        glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, frame.data());
         std::string name = "out.jpg";
         frame.write(name);
         LOG("frame saved to " + name);

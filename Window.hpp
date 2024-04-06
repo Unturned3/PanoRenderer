@@ -46,8 +46,6 @@ protected:
     std::string name_;
 };
 
-
-
 #ifdef USE_EGL
 
 #include <EGL/egl.h>
@@ -91,7 +89,10 @@ public:
 
     ~HeadlessGLContext() { eglTerminate(eglDisp_); }
 
-    std::pair<int, int> framebufferShape() override { return {width_, height_}; }
+    std::pair<int, int> framebufferShape() override
+    {
+        return {width_, height_};
+    }
 
     bool shouldClose() override { return false; }
 
@@ -115,9 +116,7 @@ private:
     // clang-format on
 };
 
-
-#endif // #ifdef USE_EGL
-
+#endif  // #ifdef USE_EGL
 
 class InteractiveGLContext : public GLContext {
 public:
