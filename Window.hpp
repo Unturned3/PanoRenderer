@@ -235,8 +235,6 @@ public:
 
 private:
     GLFWwindow* window_;
-    int width_, height_;
-    std::string name_;
     bool visible_;
 
     bool keyDown(int key) { return glfwGetKey(window_, key) == GLFW_PRESS; }
