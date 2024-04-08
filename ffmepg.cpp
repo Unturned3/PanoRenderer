@@ -28,9 +28,22 @@ void save_gray_frame(unsigned char *buf, int wrap, int xsize, int ysize,
                      char *filename)
 {
     logging("wrap: %d, xsize: %d, ysize: %d\n", wrap, xsize, ysize);
-    assert(wrap == xsize);
+    //assert(wrap == xsize);
     Image f(xsize, ysize, 1);
-    memcpy(f.data(), buf, xsize * ysize);
+    uint8_t *data = f.data();
+
+    for (int i = 0; i < ysize; i++) {
+        memcpy(data + i * xsize, buf + i * wrap, xsize);
+    }
+    //memcpy(f.data(), buf, xsize * ysize);
+
+    int mn = 999, mx = -999;
+    for (int i = 0; i < xsize * ysize; i++) {
+        mn = std::min(mn, static_cast<int>(data[i]));
+        mx = std::max(mx, static_cast<int>(data[i]));
+    }
+    logging("min/max values in frame: %d, %d", mn, mx);
+
     f.write(filename, false);
 }
 
@@ -79,6 +92,7 @@ int decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext,
                     "Warning: the generated file may not be a grayscale image, "
                     "but could e.g. be just the R component if the video "
                     "format is RGB");
+                logging("Got format: %d", pFrame->format);
             }
             // save a grayscale frame into a .pgm file
             save_gray_frame(pFrame->data[0], pFrame->linesize[0], pFrame->width,
@@ -169,6 +183,7 @@ int main(int argc, const char *argv[])
     }
 
     check(video_stream_index != -1, "No video stream found!");
+    logging("Video stream index: %d", video_stream_index);
 
     AVCodecContext *pCodecContext = avcodec_alloc_context3(pCodec);
     check(pCodecContext, "Failed to allocate AVCodecContext");
@@ -187,7 +202,7 @@ int main(int argc, const char *argv[])
     check(pPacket, "Failed to allocate AVPacket");
 
     int response = 0;
-    int pkts_to_process = 8;
+    int pkts_to_process = 4;
 
     // Fill the packet with data from the Stream
     // Bad naming... av_read_frame ac
