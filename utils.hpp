@@ -1,11 +1,12 @@
 
 #pragma once
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+// #include <GL/glew.h>
+// #include <GLFW/glfw3.h>
 
 #include <exception>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -19,7 +20,20 @@ typedef unsigned int uint;
 #define LOG(...) utils::log(__VA_ARGS__)
 #endif
 
+#define check(e, m)                        \
+    do {                                   \
+        if (!(e)) {                        \
+            throw std::runtime_error((m)); \
+        }                                  \
+    } while (0)
+
 namespace utils {
+
+template <typename T, typename Deleter>
+std::unique_ptr<T, Deleter> make_unique(T* ptr, Deleter deleter)
+{
+    return std::unique_ptr<T, Deleter>(ptr, deleter);
+}
 
 // Variadic Templates
 // https://stackoverflow.com/a/29326784
@@ -45,6 +59,7 @@ std::string path(const std::string& p)
 
 void probe_OpenGL_properties()
 {
+    /*
     LOG("OpenGL version: ", glGetString(GL_VERSION));
 
     LOG("NV_vdpau_interop: ", GLEW_NV_vdpau_interop);
@@ -65,6 +80,7 @@ void probe_OpenGL_properties()
     int maxRectTexSize;
     glGetIntegerv(GL_MAX_RECTANGLE_TEXTURE_SIZE, &maxRectTexSize);
     LOG("Max rectangular texture size: ", maxRectTexSize);
+    */
 }
 
 std::string pretty_matrix(const float* a, int n, int m, int sig_figs,

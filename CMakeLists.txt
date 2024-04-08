@@ -34,6 +34,17 @@ find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
+    #libavdevice
+    #libavfilter
+    libavformat
+    libavcodec
+    #libswresample
+    #libswscale
+    libavutil
+)
+
 
 ### Main executable ###
 
@@ -72,3 +83,16 @@ else()
     target_link_libraries(main PRIVATE GLEW::glew)
 endif()
 
+
+# ffmpeg test executable
+
+add_executable(ffmpeg ffmepg.cpp)
+
+set_target_properties(ffmpeg PROPERTIES CXX_EXTENSIONS OFF)
+target_compile_features(ffmpeg PRIVATE cxx_std_20)
+target_compile_options(ffmpeg PRIVATE
+    -Wall -Wextra -Wpedantic -Wconversion
+    -Wno-unused-variable -Wno-unused-parameter
+    -O3 #-g3 -Werror
+)
+target_link_libraries(ffmpeg PRIVATE PkgConfig::LIBAV fmt::fmt stb_image)
