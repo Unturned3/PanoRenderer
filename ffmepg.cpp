@@ -28,14 +28,14 @@ void save_gray_frame(unsigned char *buf, int wrap, int xsize, int ysize,
                      char *filename)
 {
     logging("wrap: %d, xsize: %d, ysize: %d\n", wrap, xsize, ysize);
-    //assert(wrap == xsize);
+    // assert(wrap == xsize);
     Image f(xsize, ysize, 1);
     uint8_t *data = f.data();
 
     for (int i = 0; i < ysize; i++) {
-        memcpy(data + i * xsize, buf + i * wrap, xsize);
+        memcpy(data + i * xsize, buf + i * wrap, static_cast<size_t>(xsize));
     }
-    //memcpy(f.data(), buf, xsize * ysize);
+    // memcpy(f.data(), buf, xsize * ysize);
 
     int mn = 999, mx = -999;
     for (int i = 0; i < xsize * ysize; i++) {
@@ -73,16 +73,16 @@ int decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext,
 
         if (response >= 0) {
             logging(
-                "Frame %d (type=%c, size=%d bytes, format=%d) pts %d key_frame "
+                "Frame %lld (type=%c, format=%d) pts %d key_frame "
                 "%d [DTS %d]",
-                pCodecContext->frame_number,
-                av_get_picture_type_char(pFrame->pict_type), pFrame->pkt_size,
-                pFrame->format, pFrame->pts, pFrame->key_frame,
-                pFrame->coded_picture_number);
+                pCodecContext->frame_num,
+                av_get_picture_type_char(pFrame->pict_type), pFrame->format,
+                pFrame->pts, (pFrame->flags & AV_FRAME_FLAG_KEY) != 0,
+                pFrame->pkt_dts);
 
             char frame_filename[1024];
-            snprintf(frame_filename, sizeof(frame_filename), "%s-%d.jpg",
-                     "frame", pCodecContext->frame_number);
+            snprintf(frame_filename, sizeof(frame_filename), "%s-%lld.jpg",
+                     "frame", pCodecContext->frame_num);
             // Check if the frame is a planar YUV 4:2:0, 12bpp
             // That is the format of the provided .mp4 file
             // RGB formats will definitely not give a gray image
@@ -110,12 +110,6 @@ int main(int argc, const char *argv[])
     }
 
     std::string inputFilePath = argv[1];
-
-    /*
-    auto formatContext =
-        utils::make_unique(avformat_alloc_context(), avformat_free_context);
-    auto k = formatContext.get();
-    */
 
     AVFormatContext *pFormatContext = avformat_alloc_context();
     check(pFormatContext != nullptr, "Couldn't allocate AVFormat context");
@@ -164,17 +158,10 @@ int main(int argc, const char *argv[])
                 pCodec = pLocalCodec;
                 pCodecParameters = pLocalCodecParameters;
             }
-            else if (true) {
-            }
 
             logging("Video Codec: resolution %d x %d",
                     pLocalCodecParameters->width,
                     pLocalCodecParameters->height);
-        }
-        else if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_AUDIO) {
-            logging("Audio Codec: %d channels, sample rate %d",
-                    pLocalCodecParameters->channels,
-                    pLocalCodecParameters->sample_rate);
         }
 
         // print its name, id and bitrate
