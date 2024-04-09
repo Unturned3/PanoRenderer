@@ -3,6 +3,7 @@
 // #include <GL/glew.h>
 // #include <GLFW/glfw3.h>
 
+#include <chrono>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -30,7 +31,7 @@ typedef unsigned int uint;
 namespace utils {
 
 template <typename T, typename Deleter>
-std::unique_ptr<T, Deleter> make_unique(T* ptr, Deleter deleter)
+std::unique_ptr<T, Deleter> make_unique(T *ptr, Deleter deleter)
 {
     return std::unique_ptr<T, Deleter>(ptr, deleter);
 }
@@ -38,12 +39,12 @@ std::unique_ptr<T, Deleter> make_unique(T* ptr, Deleter deleter)
 // Variadic Templates
 // https://stackoverflow.com/a/29326784
 template <typename... Args>
-void log(Args&&... args)
+void log(Args &&...args)
 {
     (std::cout << ... << args) << std::endl;
 }
 
-std::string read_file(const std::string& path)
+std::string read_file(const std::string &path)
 {
     std::ifstream f {path};
     if (f.fail()) throw std::runtime_error("Failed to read file " + path);
@@ -52,7 +53,7 @@ std::string read_file(const std::string& path)
     return ss.str();
 }
 
-std::string path(const std::string& p)
+std::string path(const std::string &p)
 {
     return root_dir / std::filesystem::path(p);
 }
@@ -83,7 +84,7 @@ void probe_OpenGL_properties()
     */
 }
 
-std::string pretty_matrix(const float* a, int n, int m, int sig_figs,
+std::string pretty_matrix(const float *a, int n, int m, int sig_figs,
                           bool col_major = true)
 {
     std::stringstream s;
@@ -97,5 +98,29 @@ std::string pretty_matrix(const float* a, int n, int m, int sig_figs,
     }
     return s.str();
 }
+
+//template <typename T> std::string type_name();
+
+template <typename T>
+class Timer {
+public:
+    Timer() : start {std::chrono::high_resolution_clock::now()} {}
+
+    ~Timer()
+    {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<T>(end - start);
+        std::cout << "Duration: " << elapsed << std::endl;
+    }
+
+    Timer(const Timer &) = delete;
+    Timer &operator=(const Timer &) = delete;
+
+    Timer(Timer &&) = delete;
+    Timer &operator=(Timer &&) = delete;
+
+private:
+    std::chrono::steady_clock::time_point start;
+};
 
 }  // namespace utils
