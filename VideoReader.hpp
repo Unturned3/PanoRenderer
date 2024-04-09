@@ -126,8 +126,11 @@ public:
             }
             else if (ret < 0) {
                 // Decoding error
+                /*
                 logging("Error while receiving a frame from the decoder: %s",
                         av_err2str(ret));
+                        */
+                logging("Error while receiving a frame from the decoder");
                 throw std::runtime_error("FFmpeg decoding failed");
             }
             else {

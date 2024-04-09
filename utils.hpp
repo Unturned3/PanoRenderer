@@ -120,7 +120,7 @@ public:
     Timer &operator=(Timer &&) = delete;
 
 private:
-    std::chrono::steady_clock::time_point start;
+    std::chrono::high_resolution_clock::time_point start;
 };
 
 }  // namespace utils
