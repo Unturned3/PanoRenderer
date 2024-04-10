@@ -44,20 +44,28 @@ public:
         check(avformat_find_stream_info(pFormatContext, nullptr) >= 0,
               "Couldn't get stream info");
 
-        auto [streamIndex, pCodec, pCodecParameters] =
-            get_video_stream_codec(pFormatContext);
+        AVCodec const *pCodec = nullptr;
+        videoStreamIndex = av_find_best_stream(
+            pFormatContext, AVMEDIA_TYPE_VIDEO, -1, -1, &pCodec, 0);
+        check(videoStreamIndex >= 0, "No video stream found");
 
-        LOG("codec name, long_name: ", pCodec->name, ", ", pCodec->long_name);
+        AVStream *video = pFormatContext->streams[videoStreamIndex];
+        width = video->codecpar->width;
+        height = video->codecpar->height;
 
-        videoStreamIndex = streamIndex;
-        width = pCodecParameters->width;
-        height = pCodecParameters->height;
+        /*
+        for (int i = 0; ; i++) {
+            const AVCodecHWConfig *c = avcodec_get_hw_config(pCodec, i);
+            check(c, fmt::format("Decoder {} doesn't support {}", pCodec->name,
+        av_hwdevice_get_type_name();
+        }
+        */
 
         pCodecContext = avcodec_alloc_context3(pCodec);
         check(pCodecContext, "Failed to allocate AVCodecContext");
 
         check(
-            avcodec_parameters_to_context(pCodecContext, pCodecParameters) >= 0,
+            avcodec_parameters_to_context(pCodecContext, video->codecpar) >= 0,
             "Failed to copy codec params to codec context");
 
         // Initialize the AVCodecContext to use the given AVCodec.
@@ -70,8 +78,10 @@ public:
         pPacket = av_packet_alloc();
         check(pPacket, "Failed to allocate AVPacket");
 
-        LOG("hwacel: ", pCodecContext->hwaccel_context != nullptr);
-        LOG("h264_videotoolbox: ", avcodec_find_decoder_by_name("videotoolbox"));
+        // TODO: test these?
+        LOG("hwaccel: ", pCodecContext->hwaccel_context != nullptr);
+        LOG("h264_videotoolbox: ",
+            avcodec_find_decoder_by_name("videotoolbox"));
     }
 
     ~VideoReader()
@@ -154,61 +164,4 @@ private:
 public:
     int width;
     int height;
-
-    static std::tuple<int, AVCodec const *, AVCodecParameters *>
-    get_video_stream_codec(AVFormatContext *pFormatContext)
-    {
-        AVCodec const *pCodec = nullptr;
-        AVCodecParameters *pCodecParameters = nullptr;
-
-        int stream_idx = -1;
-
-        // Loop though all the streams to find the video stream
-        for (int i = 0; i < static_cast<int>(pFormatContext->nb_streams); i++) {
-            auto si = pFormatContext->streams[i];
-
-            AVCodec const *pLocalCodec = nullptr;
-            AVCodecParameters *pLocalCodecParameters = si->codecpar;
-
-            logging("AVStream->time_base before open coded %d/%d",
-                    si->time_base.num, si->time_base.den);
-            logging("AVStream->r_frame_rate before open coded %d/%d",
-                    si->r_frame_rate.num, si->r_frame_rate.den);
-            logging("AVStream->start_time %" PRId64, si->start_time);
-            logging("AVStream->duration %" PRId64, si->duration);
-
-            logging("finding the proper decoder (CODEC)");
-
-            // finds the registered decoder for a codec ID
-            pLocalCodec = avcodec_find_decoder(pLocalCodecParameters->codec_id);
-
-            if (pLocalCodec == nullptr) {
-                logging("ERROR unsupported codec!");
-                // In this example if the codec is not found we just skip it
-                continue;
-            }
-
-            // when the stream is a video we store its index, codec parameters
-            // and codec
-            if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
-                if (stream_idx == -1) {
-                    stream_idx = i;
-                    pCodec = pLocalCodec;
-                    pCodecParameters = pLocalCodecParameters;
-                }
-                logging("Video Codec: resolution %d x %d",
-                        pLocalCodecParameters->width,
-                        pLocalCodecParameters->height);
-            }
-
-            // print its name, id and bitrate
-            logging("\tCodec %s ID %d bit_rate %lld", pLocalCodec->name,
-                    pLocalCodec->id, pLocalCodecParameters->bit_rate);
-        }
-
-        check(stream_idx != -1, "No video stream found!");
-        logging("Video stream index: %d", stream_idx);
-
-        return {stream_idx, pCodec, pCodecParameters};
-    }
 };

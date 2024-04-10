@@ -99,7 +99,7 @@ std::string pretty_matrix(const float *a, int n, int m, int sig_figs,
     return s.str();
 }
 
-//template <typename T> std::string type_name();
+// template <typename T> std::string type_name();
 
 template <typename T>
 class Timer {

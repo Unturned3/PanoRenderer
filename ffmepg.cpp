@@ -16,27 +16,19 @@ extern "C" {
 #include "VideoReader.hpp"
 #include "utils.hpp"
 
-void save_gray_frame(unsigned char *buf, int wrap, int xsize, int ysize,
-                     char *filename)
+int test(int argc, const char *argv[])
 {
-    logging("wrap: %d, xsize: %d, ysize: %d\n", wrap, xsize, ysize);
-    // assert(wrap == xsize);
-    Image f(xsize, ysize, 1);
-    uint8_t *data = f.data();
+    AVFormatContext *input_ctx = NULL;
+    int video_stream, ret;
+    AVStream *video = NULL;
+    AVCodecContext *decoder_ctx = NULL;
+    const AVCodec *decoder = NULL;
+    AVPacket *packet = NULL;
+    enum AVHWDeviceType type;
 
-    for (int i = 0; i < ysize; i++) {
-        memcpy(data + i * xsize, buf + i * wrap, static_cast<size_t>(xsize));
-    }
-    // memcpy(f.data(), buf, xsize * ysize);
-
-    int mn = 999, mx = -999;
-    for (int i = 0; i < xsize * ysize; i++) {
-        mn = std::min(mn, static_cast<int>(data[i]));
-        mx = std::max(mx, static_cast<int>(data[i]));
-    }
-    logging("min/max values in frame: %d, %d", mn, mx);
-
-    f.write(filename, false);
+    type = av_hwdevice_find_type_by_name("videotoolbox");
+    check(type != AV_HWDEVICE_TYPE_NONE, "No hwaccel found");
+    return 0;
 }
 
 int main(int argc, const char *argv[])
@@ -57,9 +49,9 @@ int main(int argc, const char *argv[])
         utils::Timer<std::chrono::milliseconds> t;
         for (int i = 0; i < 999; i++) {
             frame = v.readFrame();
-            //memcpy(f.data(), frame, static_cast<size_t>(v.width * v.height));
-            //std::cout << f.data()[99999] << std::endl;
-            // f.write(fmt::format("{}.jpg", i), false);
+            // memcpy(f.data(), frame, static_cast<size_t>(v.width * v.height));
+            // std::cout << f.data()[99999] << std::endl;
+            //  f.write(fmt::format("{}.jpg", i), false);
             if (!frame) {
                 std::cout << "frame cnt: " << i << std::endl;
                 break;
