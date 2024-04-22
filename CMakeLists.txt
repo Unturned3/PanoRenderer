@@ -97,3 +97,18 @@ target_compile_options(ffmpeg PRIVATE
     -O3 #-g3 -Werror
 )
 target_link_libraries(ffmpeg PRIVATE PkgConfig::LIBAV fmt::fmt stb_image)
+
+
+# decode example executable
+
+add_executable(ffd ffd.c)
+
+target_compile_features(ffd PRIVATE c_std_11)
+target_compile_options(ffd PRIVATE
+    -Wall -Wextra -Wpedantic -Wconversion
+    -Wno-unused-variable -Wno-unused-parameter
+    -Wno-c99-extensions
+    -O3 #-g3 -Werror
+)
+target_link_libraries(ffd PRIVATE PkgConfig::LIBAV)
+

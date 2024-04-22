@@ -11,6 +11,8 @@
 #include <sstream>
 #include <string>
 
+#include <fmt/core.h>
+
 #include "config.h"
 
 typedef unsigned int uint;
@@ -43,6 +45,14 @@ void log(Args &&...args)
 {
     (std::cout << ... << args) << std::endl;
 }
+
+/*
+template <typename... T>
+void log(fmt::format_string<T...> fmt, T &&...args)
+{
+    std::cout << fmt::format(fmt, std::forward<T>(args)...) << std::endl;
+}
+*/
 
 std::string read_file(const std::string &path)
 {
