@@ -143,6 +143,7 @@ int main(int argc, char** argv)
             shader.setFloat(
                 "lod", (s.fov - fov_thresh) / (s.max_fov - fov_thresh) + 1.0f);
 
+        // NOTE: glm::perspective takes vfov, not hfov
         glm::mat4 M_proj = glm::perspective(glm::radians(s.fov),
                                             window.aspectRatio(), 0.1f, 2.0f);
         shader.setMat4("proj", M_proj);
