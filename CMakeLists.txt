@@ -21,6 +21,7 @@ get_linux_distro_name(DISTRO_)
 add_subdirectory(stb_image)
 add_subdirectory(imgui)
 add_subdirectory(fmt)
+add_subdirectory(cnpy)
 
 set(GL_components OpenGL)
 
@@ -33,6 +34,7 @@ find_package(OpenGL REQUIRED COMPONENTS ${GL_components})
 find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
+find_package(ZLIB REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
@@ -72,6 +74,8 @@ target_link_libraries(main PRIVATE
     OpenGL::GL
     glfw
     glm::glm
+    cnpy
+    ZLIB::ZLIB
 )
 
 if(${USE_EGL})

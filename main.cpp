@@ -35,6 +35,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "utils.hpp"
+#include "cnpy.h"
 
 static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
                              GLenum severity, GLsizei length, const GLchar* msg,
@@ -46,6 +47,22 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
 
 int main(int argc, char** argv)
 {
+    cnpy::NpyArray arr = cnpy::npy_load(argv[1]);
+    double* data = arr.data<double>();
+    LOG("arr.shape[0]: ", arr.shape[0], " arr.shape[1]: ", arr.shape[1]);
+    for (int i=0; i<300*4; i++) {
+        std::cout << data[i] << " ";
+    }
+    std::cout << std::endl;
+    /*
+    for (int i=0; i<arr.shape[0]; i++) {
+        for (int j=0; j<arr.shape[1]; j++) {
+            std::cout << (*data)[i * arr.shape[0] + j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    */
+    return 0;
 #ifdef USE_EGL
     HeadlessGLContext window(640, 480, "OpenGL Test");
 #else
