@@ -47,30 +47,19 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
 
 int main(int argc, char** argv)
 {
-    cnpy::NpyArray arr = cnpy::npy_load(argv[1]);
-    double* data = arr.data<double>();
-    LOG("arr.shape[0]: ", arr.shape[0], " arr.shape[1]: ", arr.shape[1]);
-    for (int i=0; i<300*4; i++) {
-        std::cout << data[i] << " ";
-    }
-    std::cout << std::endl;
-    /*
-    for (int i=0; i<arr.shape[0]; i++) {
-        for (int j=0; j<arr.shape[1]; j++) {
-            std::cout << (*data)[i * arr.shape[0] + j] << " ";
-        }
-        std::cout << std::endl;
-    }
-    */
-    return 0;
 #ifdef USE_EGL
     HeadlessGLContext window(640, 480, "OpenGL Test");
 #else
     InteractiveGLContext window(640, 480, "OpenGL Test");
 #endif
 
-    std::string filePath = argc < 2 ? "../images/p1.jpg" : argv[1];
-    Image img(filePath);
+    std::string panoFilePath = argc < 2 ? "../images/p1.jpg" : argv[1];
+    Image img(panoFilePath);
+
+    if (argc >= 3) {
+        std::string posesFilePath {argv[2]};
+        AppState::get().poses = cnpy::npy_load(posesFilePath);
+    }
 
     if (glewInit() != GLEW_OK) throw std::runtime_error("GLEW init failed.");
 
@@ -124,7 +113,7 @@ int main(int argc, char** argv)
     {
         // proportion of the missing sphere that's below the horizon
         double m = 1;
-        if (argc >= 3) m = std::stod(argv[2]);
+        if (argc >= 4) m = std::stod(argv[3]);
         double u = (double)img.width() / 2 / (double)img.height();
         float v_n = (float)(u * M_1_PI);
         float v_b = (float)(u / 2 + (1 - u) * m);
@@ -143,16 +132,35 @@ int main(int argc, char** argv)
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
+
+    // Desired FPS
+    const double desiredFps = 30.0;
+    const double desiredFrameTime = 1.0 / desiredFps;
+
+    // Timing variables
+    double lastTime = glfwGetTime();
+    double currentTime = 0.0;
+    double deltaTime = 0.0;
+
     while (!window.shouldClose()) {
+
+        currentTime = glfwGetTime();
+        deltaTime = currentTime - lastTime;
+
         AppState& s = AppState::get();
 
-        updatePose();
+        if (s.poses.has_value()) {
+            updatePose();
+        }
 
 #ifndef USE_EGL
         window.handleKeyDown();
 #endif
 
         // Recalculate LoD, perspective, & view.
+        // TODO: vary LoD calculation based on how close to edge a pixel is?
+        // Need to check if this is actually a problem. If no visible aliasing,
+        // then ignore.
         float fov_thresh = 75.0f;
         if (s.fov <= fov_thresh)
             shader.setFloat("lod", 0.0f);
@@ -160,11 +168,12 @@ int main(int argc, char** argv)
             shader.setFloat(
                 "lod", (s.fov - fov_thresh) / (s.max_fov - fov_thresh) + 1.0f);
 
-        // NOTE: glm::perspective takes vfov, not hfov
+        // TODO: glm::perspective takes vfov, not hfov
         glm::mat4 M_proj = glm::perspective(glm::radians(s.fov),
                                             window.aspectRatio(), 0.1f, 2.0f);
         shader.setMat4("proj", M_proj);
 
+        // NOTE: by convention, camera faces -Z, and Y is up, X is right.
         glm::mat4 M_view =
             glm::lookAt(glm::vec3(0), -glm::vec3(glm::column(s.M_rot, 2)),
                         glm::vec3(glm::column(s.M_rot, 1)));
@@ -193,6 +202,13 @@ int main(int argc, char** argv)
             gui.render();
         }
         window.swapBuffers();
+        // Control the frame rate
+        while (deltaTime < desiredFrameTime) {
+            // Wait to maintain frame rate
+            currentTime = glfwGetTime();
+            deltaTime = currentTime - lastTime;
+        }
+        lastTime = currentTime;
 #endif
     }
 

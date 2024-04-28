@@ -11,38 +11,45 @@
 void updatePose()
 {
     AppState& s = AppState::get();
+    assert(s.poses.has_value());
 
-    // Calculate trajectory update
-    glm::vec2 pitch_yaw_accel {
-        glm::gaussRand(s.mean_pitch_accel, 1.0f) / 1.5,  // pitch
-        glm::gaussRand(0.0f, 1.0f),                      // yaw
-    };
-    s.accel = {
-        glm::normalize(pitch_yaw_accel) * s.pose_accel_m,
-        glm::gaussRand(s.mean_focal_accel, 1.0f) * s.focal_accel_m,  // focal
-    };
+    cnpy::NpyArray& arr = s.poses.value();
+    double* data = arr.data<double>();
 
-    // Update trajectory
-    s.vel = s.prev_vel + s.accel * s.delta;
+    if (s.enable_trajectory) {
+        double *p = data + static_cast<size_t>(s.pose_idx) * arr.shape[1];
 
-    if (glm::length(s.vel) > s.max_vel)
-        s.vel = s.max_vel * glm::normalize(s.vel);
+        /*  NOTE: traj.py uses X forward, Y right, Z down for the camera.
+            However, we are using -Z forward, X right, Y up for the camera.
+            So, in order to get the same rendering effect as the ones
+            produced by traj.py, we will negate the yaw values here.
 
-    s.pose = s.prev_pose + s.vel * s.delta;
+            NOTE: determine if this affects data labeling / optimization?
+            Initial assessment appears to suggest no, since we optimize on
+            the relative rotation between frames (i.e. setting the rotation
+            matrix of frame 1 to identity).
 
-    s.mean_pitch_accel = -s.pose.x / 2;
-    s.mean_focal_accel = (55 - s.pose.z) / 35;
+            We just have to set up the same camera model in optimization
+            (i.e. -Z forward, X right, Y up)
+        */
+        float yaw = -1 * static_cast<float>(p[0]);  // pan
+        float pitch = static_cast<float>(p[1]);     // tilt
+        float roll = static_cast<float>(p[2]);
+        float fov = static_cast<float>(p[3]);
 
-    s.prev_pose = s.pose;
-    s.prev_vel = s.vel;
+        s.pan = yaw, s.tilt = pitch, s.roll = roll;
+        s.fov = fov;
 
-    if (s.randomPose) {
-        s.up = glm::vec3(glm::row(s.M_rot, 1));
-        s.right = glm::cross(s.front, s.up);
-        glm::vec3 right_ = glm::normalize(s.right);
-
-        // M_rot = glm::rotate(M_rot, glm::radians(-rot_a), front);
-        s.M_rot = glm::rotate(s.M_rot, glm::radians(s.vel.x), right_);
-        s.M_rot = glm::rotate(s.M_rot, glm::radians(s.vel.y), s.up);
+        glm::mat4 R {1.0f};
+        /*  NOTE: instead of yawing around the global Y after pitching,
+            we can simply yaw before pitching when the local/global Y are
+            still coincident.
+        */
+        R = glm::rotate(R, glm::radians(yaw), {0, 1, 0});
+        R = glm::rotate(R, glm::radians(pitch), {1, 0, 0});
+        // R = glm::rotate(R, glm::radians(yaw), glm::vec3(glm::row(R, 1)));
+        R = glm::rotate(R, glm::radians(roll), {0, 0, -1});
+        s.M_rot = R;
+        s.pose_idx = static_cast<int>(static_cast<size_t>(s.pose_idx + 1) % arr.shape[0]);
     }
 }

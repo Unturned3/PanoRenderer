@@ -183,6 +183,10 @@ public:
     {
         glfwPollEvents();
         AppState& s = AppState::get();
+
+        if (s.enable_trajectory)
+            return; // Disable manual control when auto trajectory is enabled
+
         s.up = glm::vec3(glm::row(s.M_rot, 1));
 
         // normalized projection of the intrinsic x axis
