@@ -47,18 +47,24 @@ int main(int argc, const char *argv[])
 #ifdef TEST_OPENCV
     cv::VideoCapture cap(path, cv::CAP_FFMPEG);
     check(cap.isOpened(), "Error opening video file");
+
+    int fourcc = cv::VideoWriter::fourcc('a', 'v', 'c', '1');
+    cv::VideoWriter writer("out.mp4", fourcc, 30, {1024, 512}, true);
+    check(writer.isOpened(), "Error opening cv::VideoWriter");
+
     {
         utils::Timer<std::chrono::milliseconds> t("Total decode time: ", "ms");
         while (true) {
             cv::Mat frame;
             cap >> frame;
-            cv::imwrite("out.jpg", frame);
-            break;
             if (frame.empty())
                 break;
+            cv::resize(frame, frame, {1024, 512});
+            writer.write(frame);
         }
     }
     cap.release();
+    writer.release();
     cv::destroyAllWindows();
 #else
     VideoReader v(path);
