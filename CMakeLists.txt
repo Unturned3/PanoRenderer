@@ -35,6 +35,7 @@ find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(OpenCV REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
@@ -88,16 +89,19 @@ else()
 endif()
 
 
-# ffmpeg test executable
+# video decoding/encoding test executable
 
-add_executable(ffmpeg ffmepg.cpp)
+add_executable(vcd vcodec_test.cpp)
 
-set_target_properties(ffmpeg PROPERTIES CXX_EXTENSIONS OFF)
-target_compile_features(ffmpeg PRIVATE cxx_std_20)
-target_compile_options(ffmpeg PRIVATE
+set_target_properties(vcd PROPERTIES CXX_EXTENSIONS OFF)
+target_compile_features(vcd PRIVATE cxx_std_20)
+target_compile_options(vcd PRIVATE
     -Wall -Wextra -Wpedantic -Wconversion
     -Wno-unused-variable -Wno-unused-parameter
     -Wno-c99-extensions
     -O3 #-g3 -Werror
 )
-target_link_libraries(ffmpeg PRIVATE PkgConfig::LIBAV fmt::fmt stb_image)
+target_link_libraries(vcd PRIVATE
+    PkgConfig::LIBAV fmt::fmt stb_image
+    ${OpenCV_LIBS}
+)

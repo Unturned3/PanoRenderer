@@ -12,6 +12,8 @@ extern "C" {
 #include <memory>
 #include <string>
 
+#include <opencv2/opencv.hpp>
+
 #include "Image.hpp"
 #include "VideoReader.hpp"
 #include "utils.hpp"
@@ -40,6 +42,25 @@ int main(int argc, const char *argv[])
 
     std::string path = argv[1];
 
+#define TEST_OPENCV
+
+#ifdef TEST_OPENCV
+    cv::VideoCapture cap(path, cv::CAP_FFMPEG);
+    check(cap.isOpened(), "Error opening video file");
+    {
+        utils::Timer<std::chrono::milliseconds> t("Total decode time: ", "ms");
+        while (true) {
+            cv::Mat frame;
+            cap >> frame;
+            cv::imwrite("out.jpg", frame);
+            break;
+            if (frame.empty())
+                break;
+        }
+    }
+    cap.release();
+    cv::destroyAllWindows();
+#else
     VideoReader v(path);
     Image f(v.width, v.height, 1);
 
@@ -49,14 +70,15 @@ int main(int argc, const char *argv[])
         utils::Timer<std::chrono::milliseconds> t("ms");
         for (int i = 0; i < 999; i++) {
             frame = v.readFrame();
-            // memcpy(f.data(), frame, static_cast<size_t>(v.width * v.height));
-            // std::cout << f.data()[99999] << std::endl;
-            //  f.write(fmt::format("{}.jpg", i), false);
             if (!frame) {
                 std::cout << "frame cnt: " << i << std::endl;
                 break;
             }
+            memcpy(f.data(), frame, static_cast<size_t>(v.width * v.height));
+            //std::cout << f.data()[99999] << std::endl;
+            //f.write(fmt::format("{}.jpg", i), false);
         }
     }
+#endif
     return 0;
 }
