@@ -104,8 +104,15 @@ std::string pretty_matrix(const float *a, int n, int m, int sig_figs,
 template <typename T>
 class Timer {
 public:
+
+    Timer(std::string message, std::string unit)
+        : start {std::chrono::high_resolution_clock::now()},
+          message {"Elapsed time: "}, unit {unit}
+    {
+    }
+
     Timer(std::string unit)
-        : start {std::chrono::high_resolution_clock::now()}, unit {unit}
+        : Timer("Elapsed time: ", unit)
     {
     }
 
@@ -113,7 +120,7 @@ public:
     {
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<T>(end - start).count();
-        std::cout << "Duration: " << elapsed << unit << std::endl;
+        std::cout << message << elapsed << " " << unit << std::endl;
     }
 
     Timer(const Timer &) = delete;
@@ -124,6 +131,7 @@ public:
 
 private:
     std::chrono::high_resolution_clock::time_point start;
+    std::string message;
     std::string unit;
 };
 
