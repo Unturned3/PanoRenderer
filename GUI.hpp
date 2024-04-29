@@ -50,9 +50,9 @@ public:
             "Debug Info (Press H to hide/show)", nullptr,
             ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoScrollbar);
 
-        float pan = atan2(s.M_rot[2][0], s.M_rot[2][2]);
-        float tilt = atan2(-s.M_rot[2][1], sqrtf(powf(s.M_rot[0][1], 2) + powf(s.M_rot[1][1], 2)));
-        float roll = atan2(s.M_rot[0][1], s.M_rot[1][1]);
+        float pan = atan2f(s.M_rot[2][0], s.M_rot[2][2]);
+        float tilt = atan2f(-s.M_rot[2][1], sqrtf(powf(s.M_rot[0][1], 2) + powf(s.M_rot[1][1], 2)));
+        float roll = atan2f(s.M_rot[0][1], s.M_rot[1][1]);
         ImGui::Text("R Pan: %4.0f°, Tilt: %4.0f°, Roll: %4.0f°, FoV: %4.0f°",
             glm::degrees(pan), glm::degrees(tilt), glm::degrees(roll), s.fov);
         ImGui::Text("E Pan: %4.0f°, Tilt: %4.0f°, Roll: %4.0f°, FoV: %4.0f°",

@@ -4,7 +4,10 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
+
+#ifdef __APPLE__
 #pragma GCC diagnostic ignored "-Wshorten-64-to-32"
+#endif
 
 
 #ifndef LIBCNPY_H_

@@ -132,7 +132,7 @@ int main(int argc, char** argv)
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
-
+#ifndef USE_EGL
     // Desired FPS
     const double desiredFps = 30.0;
     const double desiredFrameTime = 1.0 / desiredFps;
@@ -141,11 +141,14 @@ int main(int argc, char** argv)
     double lastTime = glfwGetTime();
     double currentTime = 0.0;
     double deltaTime = 0.0;
+#endif
 
     while (!window.shouldClose()) {
 
+#ifndef USE_EGL
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTime;
+#endif
 
         AppState& s = AppState::get();
 

@@ -44,7 +44,11 @@ public:
         check(avformat_find_stream_info(pFormatContext, nullptr) >= 0,
               "Couldn't get stream info");
 
+#ifdef __APPLE__
         AVCodec const *pCodec = nullptr;
+#else
+        AVCodec *pCodec = nullptr;
+#endif
         videoStreamIndex = av_find_best_stream(
             pFormatContext, AVMEDIA_TYPE_VIDEO, -1, -1, &pCodec, 0);
         check(videoStreamIndex >= 0, "No video stream found");

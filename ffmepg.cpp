@@ -46,7 +46,7 @@ int main(int argc, const char *argv[])
     uint8_t *frame = nullptr;
 
     {
-        utils::Timer<std::chrono::milliseconds> t;
+        utils::Timer<std::chrono::milliseconds> t("ms");
         for (int i = 0; i < 999; i++) {
             frame = v.readFrame();
             // memcpy(f.data(), frame, static_cast<size_t>(v.width * v.height));
