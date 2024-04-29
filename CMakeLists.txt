@@ -86,17 +86,19 @@ endif()
 
 # ffmpeg test executable
 
-add_executable(ffmpeg ffmepg.cpp)
+if(APPLE)
+    add_executable(ffmpeg ffmepg.cpp)
 
-set_target_properties(ffmpeg PROPERTIES CXX_EXTENSIONS OFF)
-target_compile_features(ffmpeg PRIVATE cxx_std_20)
-target_compile_options(ffmpeg PRIVATE
-    -Wall -Wextra -Wpedantic -Wconversion
-    -Wno-unused-variable -Wno-unused-parameter
-    -Wno-c99-extensions
-    -O3 #-g3 -Werror
-)
-target_link_libraries(ffmpeg PRIVATE PkgConfig::LIBAV fmt::fmt stb_image)
+    set_target_properties(ffmpeg PROPERTIES CXX_EXTENSIONS OFF)
+    target_compile_features(ffmpeg PRIVATE cxx_std_20)
+    target_compile_options(ffmpeg PRIVATE
+        -Wall -Wextra -Wpedantic -Wconversion
+        -Wno-unused-variable -Wno-unused-parameter
+        -Wno-c99-extensions
+        -O3 #-g3 -Werror
+    )
+    target_link_libraries(ffmpeg PRIVATE PkgConfig::LIBAV fmt::fmt stb_image)
+endif()
 
 
 # decode example executable
