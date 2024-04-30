@@ -24,7 +24,9 @@ vec2 Cart2Spherical(vec3 p) {
     float ua = u + 0.5;
     float ub = fract(u + 1.0) - 0.5;
     // 1-v, so we don't have to flip frames when loading them from disk.
-    return vec2(fwidth(ua) < fwidth(ub) ? ua : ub, 1-v);
+    // Actually, we use v here now to render the images upside-down.
+    // See NOTE in Pose.hpp, line 37.
+    return vec2(fwidth(ua) < fwidth(ub) ? ua : ub, v);
 }
 
 void main() {

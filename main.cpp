@@ -61,6 +61,10 @@ int main(int argc, char** argv)
 
     PanoContainer pano;
 
+    int fourcc = cv::VideoWriter::fourcc('a', 'v', 'c', '1');
+    cv::VideoWriter videoWriter("out.mp4", fourcc, 30, {640, 480}, true);
+    check(videoWriter.isOpened(), "Error opening cv::VideoWriter");
+
     if (panoFilePath.substr(panoFilePath.length() - 4) == ".mp4") {
         pano = PanoContainer(cv::VideoCapture(panoFilePath, cv::CAP_FFMPEG));
     } else {
@@ -196,41 +200,71 @@ int main(int argc, char** argv)
 
         // Draw projected panorama
         glBindTexture(GL_TEXTURE_2D, tex);
-        if (pano.isVideo) {
-            pano.nextFrame();
-            if (pano.frame.empty()) {
-                break;
-            }
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, pano.width, pano.height,
-                GL_BGR, GL_UNSIGNED_BYTE, pano.data);
-        }
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0,
                      static_cast<int>(vertices.size() / stride));
 
 #ifdef USE_EGL
+        /*
         auto [w, h] = window.framebufferShape();
         Image frame(w, h, 3);
         glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, frame.data());
         std::string name = "out.jpg";
         frame.write(name);
         LOG("frame saved to " + name);
+        */
         break;
 #else
         if (s.drawUI) {
             gui.update();
             gui.render();
         }
+        auto [w, h] = window.framebufferShape();
+        cv::Mat mat(cv::Size(w, h), CV_8UC3);
+
+        /*  NOTE: we tell OpenGL that everything is in RGB, while in reality
+            the frames loaded by OpenCV is in BGR, and cv::VideoWriter expects
+            BGR input. If OpenGL renders everything as RGB, the output frame
+            in the window will have R-B swapped, but the encoded video will
+            look correct.
+        */
+        glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, mat.data);
+
+        /*  On macOS, the FB shape might be larger than window shape due
+            to the use of HiDPI displays, so we explicitly downscale the
+            frame to the desired size.
+        */
+        cv::resize(mat, mat, {640, 480});
+        videoWriter.write(mat);
+
         window.swapBuffers();
         // Control the frame rate
+        /*
         while (deltaTime < desiredFrameTime) {
             // Wait to maintain frame rate
             currentTime = glfwGetTime();
             deltaTime = currentTime - lastTime;
         }
         lastTime = currentTime;
+        */
 #endif
+
+        // Update frame as appropriate
+        if (pano.isVideo) {
+            pano.nextFrame();
+            if (pano.frame.empty()) {
+                break;
+            }
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, pano.width, pano.height,
+                GL_RGB, GL_UNSIGNED_BYTE, pano.data);
+        }
+
+        s.pose_idx += 1;
+        if (static_cast<size_t>(s.pose_idx) == s.poses.value().shape[0]) {
+            break;
+        }
     }
 
+    videoWriter.release();
     return 0;
 }

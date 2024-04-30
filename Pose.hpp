@@ -33,7 +33,21 @@ void updatePose()
             (i.e. -Z forward, X right, Y up)
         */
         float yaw = -1 * static_cast<float>(p[0]);  // pan
-        float pitch = static_cast<float>(p[1]);     // tilt
+
+        /*  NOTE: OpenGL assumes bottom-left texture origin, while most other
+            libraries (e.g. OpenCV) assumes upper-left. So, the frames loaded
+            by OpenCV are upside-down when rendered in OpenGL. Previously, we
+            render the frames correctly oriented to the window by changing every
+            texture v coordinate to (1-v). However, this means the frames are
+            "flipped" from the perspective of cv::VideoWriter when we read it
+            back from the window with glReadPixels.
+
+            So, for the sake of video codec efficiency, we don't do any frame
+            flipping (at the cost of rendering them upside-down to the window).
+            However, we also need to negate the pitch values correspondingly,
+            as done below.
+        */
+        float pitch = -1 * static_cast<float>(p[1]);     // tilt
         float roll = static_cast<float>(p[2]);
         float fov = static_cast<float>(p[3]);
 
@@ -50,6 +64,7 @@ void updatePose()
         // R = glm::rotate(R, glm::radians(yaw), glm::vec3(glm::row(R, 1)));
         R = glm::rotate(R, glm::radians(roll), {0, 0, -1});
         s.M_rot = R;
-        s.pose_idx = static_cast<int>(static_cast<size_t>(s.pose_idx + 1) % arr.shape[0]);
+        //s.pose_idx = static_cast<int>(static_cast<size_t>(s.pose_idx + 1) % arr.shape[0]);
+        s.pose_idx = s.pose_idx + 1;
     }
 }

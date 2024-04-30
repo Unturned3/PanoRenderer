@@ -9,3 +9,11 @@
 
 	./main /Volumes/SSD1/export/VID_20240211_135710_00_046.mp4 ../trajectories/011.npy
 
+# Problems
+
+	The issue of video being upside down
+
+	BGR RGB?
+
+	The rendered frame seems to be BGR, then subsequent ones are correctly colored.
+
