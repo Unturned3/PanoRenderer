@@ -23,7 +23,8 @@ vec2 Cart2Spherical(vec3 p) {
     float v = asin(p.y) * v_norm + v_bias;
     float ua = u + 0.5;
     float ub = fract(u + 1.0) - 0.5;
-    return vec2(fwidth(ua) < fwidth(ub) ? ua : ub, v);
+    // 1-v, so we don't have to flip frames when loading them from disk.
+    return vec2(fwidth(ua) < fwidth(ub) ? ua : ub, 1-v);
 }
 
 void main() {
@@ -31,6 +32,6 @@ void main() {
     mat4 inv_proj = inverse(proj);
     vec4 p = inv_view * inv_proj * localPos;
     vec2 uv = Cart2Spherical(normalize(p.xyz));
-    //fragColor = texture(tex, uv);
-    fragColor = textureLod(tex, uv, lod);
+    fragColor = texture(tex, uv);
+    //fragColor = textureLod(tex, uv, lod);
 }

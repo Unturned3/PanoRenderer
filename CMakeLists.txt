@@ -77,6 +77,7 @@ target_link_libraries(main PRIVATE
     glm::glm
     cnpy
     ZLIB::ZLIB
+    ${OpenCV_LIBS}
 )
 
 if(${USE_EGL})

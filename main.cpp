@@ -22,6 +22,9 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <variant>
+
+#include <opencv2/opencv.hpp>
 
 #include "AppState.hpp"
 #include "GUI.hpp"
@@ -36,6 +39,7 @@
 #include "imgui_impl_opengl3.h"
 #include "utils.hpp"
 #include "cnpy.h"
+#include "PanoContainer.hpp"
 
 static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
                              GLenum severity, GLsizei length, const GLchar* msg,
@@ -54,7 +58,14 @@ int main(int argc, char** argv)
 #endif
 
     std::string panoFilePath = argc < 2 ? "../images/p1.jpg" : argv[1];
-    Image img(panoFilePath);
+
+    PanoContainer pano;
+
+    if (panoFilePath.substr(panoFilePath.length() - 4) == ".mp4") {
+        pano = PanoContainer(cv::VideoCapture(panoFilePath, cv::CAP_FFMPEG));
+    } else {
+        pano = PanoContainer(Image(panoFilePath, false));
+    }
 
     if (argc >= 3) {
         std::string posesFilePath {argv[2]};
@@ -82,14 +93,12 @@ int main(int argc, char** argv)
         float borderColor[] = {0.2f, 0.2f, 0.2f, 1.0f};
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                    GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width(), img.height(), 0, GL_RGB,
-                 GL_UNSIGNED_BYTE, img.data());
-
-    glGenerateMipmap(GL_TEXTURE_2D);
+    // TODO: use GL_BGR for video from opencv?
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pano.width, pano.height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, pano.data);
 
     // Rectangle (two triangles) covering the screen.
     constexpr int stride = 3;
@@ -114,7 +123,7 @@ int main(int argc, char** argv)
         // proportion of the missing sphere that's below the horizon
         double m = 1;
         if (argc >= 4) m = std::stod(argv[3]);
-        double u = (double)img.width() / 2 / (double)img.height();
+        double u = (double)pano.width / 2 / (double)pano.height;
         float v_n = (float)(u * M_1_PI);
         float v_b = (float)(u / 2 + (1 - u) * m);
         shader.setFloat("v_norm", v_n);
@@ -187,6 +196,14 @@ int main(int argc, char** argv)
 
         // Draw projected panorama
         glBindTexture(GL_TEXTURE_2D, tex);
+        if (pano.isVideo) {
+            pano.nextFrame();
+            if (pano.frame.empty()) {
+                break;
+            }
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, pano.width, pano.height,
+                GL_BGR, GL_UNSIGNED_BYTE, pano.data);
+        }
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0,
                      static_cast<int>(vertices.size() / stride));
