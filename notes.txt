@@ -5,5 +5,7 @@
 
 	nvidia-settings --assign CurrentMetaMode="nvidia-auto-select +0+0 { ForceFullCompositionPipeline = On }"
 
+# Good trajectory
 
+	./main /Volumes/SSD1/export/VID_20240211_135710_00_046.mp4 ../trajectories/011.npy
 
