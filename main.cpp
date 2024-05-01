@@ -228,7 +228,16 @@ int main(int argc, char** argv)
             in the window will have R-B swapped, but the encoded video will
             look correct.
         */
-        glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, mat.data);
+        {
+            GLenum fmt = GL_RGB;
+            if (!pano.isVideo) {
+                /*  Unlike OpenCV, stbi_image loads images as RGB, so we need
+                    to swap the channels to give cv::VideoWriter what it wants
+                    i.e. BGR. */
+                fmt = GL_BGR;
+            }
+            glReadPixels(0, 0, w, h, fmt, GL_UNSIGNED_BYTE, mat.data);
+        }
 
         /*  On macOS, the FB shape might be larger than window shape due
             to the use of HiDPI displays, so we explicitly downscale the
