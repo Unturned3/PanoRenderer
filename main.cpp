@@ -2,10 +2,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <algorithm>
 #include <cassert>
-#include <cmath>
-#include <cstdint>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
@@ -15,28 +12,18 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include <iostream>
-#include <memory>
-#include <random>
 #include <string>
-#include <thread>
-#include <utility>
 #include <vector>
-#include <variant>
 
 #include <opencv2/opencv.hpp>
 
 #include "AppState.hpp"
 #include "GUI.hpp"
 #include "Image.hpp"
-#include "IndexBuffer.hpp"
 #include "Pose.hpp"
 #include "Shader.hpp"
 #include "VertexBuffer.hpp"
 #include "Window.hpp"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 #include "utils.hpp"
 #include "cnpy.h"
 #include "PanoContainer.hpp"

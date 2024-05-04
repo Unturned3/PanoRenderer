@@ -9,12 +9,10 @@ extern "C" {
 #include <cstdarg>
 #include <cstdio>
 #include <iostream>
-#include <memory>
 #include <string>
 
 #include <opencv2/opencv.hpp>
 
-#include "Image.hpp"
 #include "VideoReader.hpp"
 #include "utils.hpp"
 
