@@ -24,15 +24,10 @@ void updatePose()
             So, in order to get the same rendering effect as the ones
             produced by traj.py, we will negate the yaw values here.
 
-            NOTE: determine if this affects data labeling / optimization?
-            Initial assessment appears to suggest no, since we optimize on
-            the relative rotation between frames (i.e. setting the rotation
-            matrix of frame 1 to identity).
-
-            We just have to set up the same camera model in optimization
-            (i.e. -Z forward, X right, Y up)
+            NOTE: screw it. We're gonna use this OpenGL program's setup as the
+            convention for rendering things.
         */
-        float yaw = -1 * static_cast<float>(p[0]);  // pan
+        float yaw = static_cast<float>(p[0]);  // pan
 
         /*  NOTE: OpenGL assumes bottom-left texture origin, while most other
             libraries (e.g. OpenCV) assumes upper-left. So, the frames loaded

@@ -14,7 +14,7 @@
 
 class AppState {
 public:
-    bool drawUI = true;
+    bool drawUI = false;
 
     std::optional<cnpy::NpyArray> poses = std::nullopt;
 

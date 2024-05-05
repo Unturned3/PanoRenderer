@@ -138,7 +138,7 @@ public:
 
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_RESIZABLE, false);
-        glfwWindowHint(GLFW_VISIBLE, true);
+        glfwWindowHint(GLFW_VISIBLE, false);
 
         window_ =
             glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
