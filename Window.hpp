@@ -129,7 +129,6 @@ public:
             throw std::runtime_error("GLFW failed to initialize.");
 
         glfwDefaultWindowHints();
-        glfwWindowHint(GLFW_VISIBLE, true);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
@@ -139,7 +138,7 @@ public:
 
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_RESIZABLE, false);
-        glfwWindowHint(GLFW_VISIBLE, false);
+        glfwWindowHint(GLFW_VISIBLE, true);
 
         window_ =
             glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
@@ -210,6 +209,9 @@ public:
             s.M_rot = glm::rotate(s.M_rot, glm::radians(-rot_a), s.front);
         if (keyDown(GLFW_KEY_RIGHT))
             s.M_rot = glm::rotate(s.M_rot, glm::radians(rot_a), s.front);
+        /*  NOTE: we are rendering images upside down. Technically we should
+            swap the behavior of the W/S keys, but since we're not going to
+            use these keys to generate videos, this is left as it is. */
         if (keyDown(GLFW_KEY_W))
             s.M_rot = glm::rotate(s.M_rot, glm::radians(rot_a), right_);
         if (keyDown(GLFW_KEY_S))
@@ -233,6 +235,17 @@ public:
                 std::string name = "out.jpg";
                 frame.write(name);
                 LOG("frame saved to " + name);
+            }
+            if (s.poses.has_value()) {
+                if (key == GLFW_KEY_J) {
+                    s.pose_idx -= 1;
+                    if (s.pose_idx < 0)
+                        s.pose_idx += s.poses->shape[0];
+                }
+                if (key == GLFW_KEY_K) {
+                    s.pose_idx += 1;
+                    s.pose_idx %= s.poses->shape[0];
+                }
             }
         }
     }
