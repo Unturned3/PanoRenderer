@@ -59,7 +59,5 @@ void updatePose()
         // R = glm::rotate(R, glm::radians(yaw), glm::vec3(glm::row(R, 1)));
         R = glm::rotate(R, glm::radians(roll), {0, 0, -1});
         s.M_rot = R;
-        //s.pose_idx = static_cast<int>(static_cast<size_t>(s.pose_idx + 1) % arr.shape[0]);
-        s.pose_idx = s.pose_idx + 1;
     }
 }
