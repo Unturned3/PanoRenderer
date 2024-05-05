@@ -14,7 +14,7 @@
 
 class AppState {
 public:
-    bool drawUI = false;
+    bool drawUI = true;
 
     std::optional<cnpy::NpyArray> poses = std::nullopt;
 
@@ -23,6 +23,7 @@ public:
     float fov = 75.0f;
     glm::mat4 M_rot {1.0f};
 
+    glm::mat4 M_proj {1.0f};
     glm::vec3 front {0, 0, -1};
     glm::vec3 up {0};
     glm::vec3 right {0};

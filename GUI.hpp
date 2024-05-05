@@ -53,9 +53,9 @@ public:
         float pan = atan2f(s.M_rot[2][0], s.M_rot[2][2]);
         float tilt = atan2f(-s.M_rot[2][1], sqrtf(powf(s.M_rot[0][1], 2) + powf(s.M_rot[1][1], 2)));
         float roll = atan2f(s.M_rot[0][1], s.M_rot[1][1]);
-        ImGui::Text("R Pan: %4.0f°, Tilt: %4.0f°, Roll: %4.0f°, FoV: %4.0f°",
+        ImGui::Text("R Pan: %5.1f°, Tilt: %5.1f°, Roll: %4.1f°, FoV: %3.1f°",
             glm::degrees(pan), glm::degrees(tilt), glm::degrees(roll), s.fov);
-        ImGui::Text("E Pan: %4.0f°, Tilt: %4.0f°, Roll: %4.0f°, FoV: %4.0f°",
+        ImGui::Text("E Pan: %5.1f°, Tilt: %5.1f°, Roll: %4.1f°, FoV: %4.1f°",
             s.pan, s.tilt, s.roll, s.fov);
 
         ImGui::Text("Average %.2f ms/frame (%.1f FPS)", 1000.0f / s.fps, s.fps);
@@ -65,6 +65,13 @@ public:
         ImGui::Text(
             "%s",
             utils::pretty_matrix(glm::value_ptr(s.M_rot), 4, 4, 2).c_str());
+
+        ImGui::Text("M_proj: ");
+        ImGui::SameLine();
+        ImGui::Text(
+            "%s",
+            utils::pretty_matrix(glm::value_ptr(s.M_proj), 4, 4, 2).c_str());
+
         ImGui::Text("|right|: %f", glm::length(s.right));
         ImGui::Checkbox("Enable trajectory", &s.enable_trajectory);
         if (ImGui::Button("Reset trajectory")) {

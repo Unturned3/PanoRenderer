@@ -174,6 +174,7 @@ int main(int argc, char** argv)
         // TODO: glm::perspective takes vfov, not hfov
         glm::mat4 M_proj = glm::perspective(glm::radians(s.fov),
                                             window.aspectRatio(), 0.1f, 2.0f);
+        s.M_proj = M_proj;
         shader.setMat4("proj", M_proj);
 
         // NOTE: by convention, camera faces -Z, and Y is up, X is right.
@@ -255,9 +256,11 @@ int main(int argc, char** argv)
                 GL_RGB, GL_UNSIGNED_BYTE, pano.data);
         }
 
-        s.pose_idx += 1;
-        if (static_cast<size_t>(s.pose_idx) == s.poses.value().shape[0]) {
-            break;
+        if (s.poses.has_value()) {
+            s.pose_idx += 1;
+            if (static_cast<size_t>(s.pose_idx) == s.poses.value().shape[0]) {
+                break;
+            }
         }
     }
 
