@@ -185,7 +185,7 @@ public:
         AppState& s = AppState::get();
 
         if (s.enable_trajectory)
-            return; // Disable manual control when auto trajectory is enabled
+            return;  // Disable manual control when auto trajectory is enabled
 
         s.up = glm::vec3(glm::row(s.M_rot, 1));
 
@@ -239,8 +239,7 @@ public:
             if (s.poses.has_value()) {
                 if (key == GLFW_KEY_J) {
                     s.pose_idx -= 1;
-                    if (s.pose_idx < 0)
-                        s.pose_idx += s.poses->shape[0];
+                    if (s.pose_idx < 0) s.pose_idx += s.poses->shape[0];
                 }
                 if (key == GLFW_KEY_K) {
                     s.pose_idx += 1;

@@ -17,7 +17,7 @@ void updatePose()
     double* data = arr.data<double>();
 
     if (s.enable_trajectory) {
-        double *p = data + static_cast<size_t>(s.pose_idx) * arr.shape[1];
+        double* p = data + static_cast<size_t>(s.pose_idx) * arr.shape[1];
 
         /*  NOTE: cv2 imread, imwrite, VideoCapture, and VideoWriter all
             assumes a top-left texture origin. When they load a correctly
@@ -32,13 +32,13 @@ void updatePose()
 
             Flipping images on the CPU is slow. Therefore, we never flip them,
             and OpenGL will work with the y-flipped images. However, this means
-            that we need to negate our pitch and roll angles. Or else, pitching up in
-            OpenGL will actually be pitching down in the final output video (and
-            rolling clockwise in-screen will appear as a counter-clockwise
+            that we need to negate our pitch and roll angles. Or else, pitching
+           up in OpenGL will actually be pitching down in the final output video
+           (and rolling clockwise in-screen will appear as a counter-clockwise
             rotation). */
 
-        float yaw = static_cast<float>(p[0]);  // pan
-        float pitch = -1 * static_cast<float>(p[1]);     // tilt
+        float yaw = static_cast<float>(p[0]);         // pan
+        float pitch = -1 * static_cast<float>(p[1]);  // tilt
         float roll = -1 * static_cast<float>(p[2]);
         float fov = static_cast<float>(p[3]);
 

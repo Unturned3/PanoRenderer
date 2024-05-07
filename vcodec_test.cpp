@@ -55,8 +55,7 @@ int main(int argc, const char *argv[])
         while (true) {
             cv::Mat frame;
             cap >> frame;
-            if (frame.empty())
-                break;
+            if (frame.empty()) break;
             cv::resize(frame, frame, {1024, 512});
             writer.write(frame);
         }
@@ -79,8 +78,8 @@ int main(int argc, const char *argv[])
                 break;
             }
             memcpy(f.data(), frame, static_cast<size_t>(v.width * v.height));
-            //std::cout << f.data()[99999] << std::endl;
-            //f.write(fmt::format("{}.jpg", i), false);
+            // std::cout << f.data()[99999] << std::endl;
+            // f.write(fmt::format("{}.jpg", i), false);
         }
     }
 #endif

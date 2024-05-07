@@ -17,11 +17,10 @@ public:
 
     PanoContainer(cv::VideoCapture cap) : cap(cap)
     {
-        check(this->cap.isOpened(),
-              "Error opening video file");
+        check(this->cap.isOpened(), "Error opening video file");
         isVideo = true;
-        width = (int) cap.get(cv::CAP_PROP_FRAME_WIDTH);
-        height = (int) cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        width = (int)cap.get(cv::CAP_PROP_FRAME_WIDTH);
+        height = (int)cap.get(cv::CAP_PROP_FRAME_HEIGHT);
         nextFrame();
     }
 

@@ -20,13 +20,13 @@
 #include "AppState.hpp"
 #include "GUI.hpp"
 #include "Image.hpp"
+#include "PanoContainer.hpp"
 #include "Pose.hpp"
 #include "Shader.hpp"
 #include "VertexBuffer.hpp"
 #include "Window.hpp"
-#include "utils.hpp"
 #include "cnpy.h"
-#include "PanoContainer.hpp"
+#include "utils.hpp"
 
 static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
                              GLenum severity, GLsizei length, const GLchar* msg,
@@ -54,7 +54,8 @@ int main(int argc, char** argv)
 
     if (panoFilePath.substr(panoFilePath.length() - 4) == ".mp4") {
         pano = PanoContainer(cv::VideoCapture(panoFilePath, cv::CAP_FFMPEG));
-    } else {
+    }
+    else {
         pano = PanoContainer(Image(panoFilePath, false));
     }
 
@@ -144,7 +145,6 @@ int main(int argc, char** argv)
 #endif
 
     while (!window.shouldClose()) {
-
 #ifndef USE_EGL
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTime;
@@ -253,7 +253,7 @@ int main(int argc, char** argv)
                 break;
             }
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, pano.width, pano.height,
-                GL_RGB, GL_UNSIGNED_BYTE, pano.data);
+                            GL_RGB, GL_UNSIGNED_BYTE, pano.data);
         }
 
         if (s.poses.has_value()) {

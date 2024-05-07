@@ -104,17 +104,14 @@ std::string pretty_matrix(const float *a, int n, int m, int sig_figs,
 template <typename T>
 class Timer {
 public:
-
     Timer(std::string message, std::string unit)
         : start {std::chrono::high_resolution_clock::now()},
-          message {"Elapsed time: "}, unit {unit}
+          message {"Elapsed time: "},
+          unit {unit}
     {
     }
 
-    Timer(std::string unit)
-        : Timer("Elapsed time: ", unit)
-    {
-    }
+    Timer(std::string unit) : Timer("Elapsed time: ", unit) {}
 
     ~Timer()
     {

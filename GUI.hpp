@@ -7,8 +7,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include "AppState.hpp"
 #include "Window.hpp"
@@ -51,12 +51,14 @@ public:
             ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoScrollbar);
 
         float pan = atan2f(s.M_rot[2][0], s.M_rot[2][2]);
-        float tilt = atan2f(-s.M_rot[2][1], sqrtf(powf(s.M_rot[0][1], 2) + powf(s.M_rot[1][1], 2)));
+        float tilt = atan2f(-s.M_rot[2][1], sqrtf(powf(s.M_rot[0][1], 2) +
+                                                  powf(s.M_rot[1][1], 2)));
         float roll = atan2f(s.M_rot[0][1], s.M_rot[1][1]);
         ImGui::Text("R Pan: %5.1f°, Tilt: %5.1f°, Roll: %4.1f°, FoV: %3.1f°",
-            glm::degrees(pan), glm::degrees(tilt), glm::degrees(roll), s.fov);
+                    glm::degrees(pan), glm::degrees(tilt), glm::degrees(roll),
+                    s.fov);
         ImGui::Text("E Pan: %5.1f°, Tilt: %5.1f°, Roll: %4.1f°, FoV: %4.1f°",
-            s.pan, s.tilt, s.roll, s.fov);
+                    s.pan, s.tilt, s.roll, s.fov);
 
         ImGui::Text("Average %.2f ms/frame (%.1f FPS)", 1000.0f / s.fps, s.fps);
         // ImGui::Text("Window focused: %s", ImGui::IsWindowFocused());
