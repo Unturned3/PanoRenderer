@@ -40,10 +40,10 @@ void updatePose()
         float yaw = static_cast<float>(p[0]);         // pan
         float pitch = -1 * static_cast<float>(p[1]);  // tilt
         float roll = -1 * static_cast<float>(p[2]);
-        float fov = static_cast<float>(p[3]);
+        float hfov = static_cast<float>(p[3]);
 
         s.pan = yaw, s.tilt = pitch, s.roll = roll;
-        s.fov = fov;
+        s.hfov = hfov;
 
         glm::mat4 R {1.0f};
         /*  NOTE: instead of yawing around the global Y after pitching,

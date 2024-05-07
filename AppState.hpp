@@ -20,7 +20,7 @@ public:
 
     // TODO: make this explicitly specify hfov or vfov
     float pan = 0, tilt = 0, roll = 0;
-    float fov = 75.0f;
+    float hfov = 75.0f;
     glm::mat4 M_rot {1.0f};
 
     glm::mat4 M_proj {1.0f};

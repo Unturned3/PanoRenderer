@@ -197,13 +197,13 @@ public:
         s.right = glm::cross(s.front, s.up);
         glm::vec3 right_ = glm::normalize(s.right);
 
-        if (keyDown(GLFW_KEY_UP)) s.fov -= 1;
-        if (keyDown(GLFW_KEY_DOWN)) s.fov += 1;
+        if (keyDown(GLFW_KEY_UP)) s.hfov -= 1;
+        if (keyDown(GLFW_KEY_DOWN)) s.hfov += 1;
 
-        s.fov = std::min(s.max_fov, s.fov);
-        s.fov = std::max(10.0f, s.fov);
+        s.hfov = std::min(s.max_fov, s.hfov);
+        s.hfov = std::max(10.0f, s.hfov);
 
-        float rot_a = 1.2f - (s.max_fov - s.fov) / s.max_fov;
+        float rot_a = 1.2f - (s.max_fov - s.hfov) / s.max_fov;
 
         if (keyDown(GLFW_KEY_LEFT))
             s.M_rot = glm::rotate(s.M_rot, glm::radians(-rot_a), s.front);

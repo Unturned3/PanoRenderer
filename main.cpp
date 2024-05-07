@@ -88,7 +88,6 @@ int main(int argc, char** argv)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // TODO: use GL_BGR for video from opencv?
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pano.width, pano.height, 0, GL_RGB,
                  GL_UNSIGNED_BYTE, pano.data);
 
@@ -139,15 +138,19 @@ int main(int argc, char** argv)
     const double desiredFrameTime = 1.0 / desiredFps;
 
     // Timing variables
+    /*
     double lastTime = glfwGetTime();
     double currentTime = 0.0;
     double deltaTime = 0.0;
+    */
 #endif
 
     while (!window.shouldClose()) {
 #ifndef USE_EGL
+        /*
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTime;
+        */
 #endif
 
         AppState& s = AppState::get();
@@ -161,19 +164,21 @@ int main(int argc, char** argv)
 #endif
 
         // Recalculate LoD, perspective, & view.
-        // TODO: vary LoD calculation based on how close to edge a pixel is?
-        // Need to check if this is actually a problem. If no visible aliasing,
-        // then ignore.
+        /*  NOTE: this is actually not used since we our rendered FoV is
+            usually less than 75 degrees. No aliasing effects are observed. */
         float fov_thresh = 75.0f;
-        if (s.fov <= fov_thresh)
+        if (s.hfov <= fov_thresh)
             shader.setFloat("lod", 0.0f);
         else
             shader.setFloat(
-                "lod", (s.fov - fov_thresh) / (s.max_fov - fov_thresh) + 1.0f);
+                "lod", (s.hfov - fov_thresh) / (s.max_fov - fov_thresh) + 1.0f);
 
-        // TODO: glm::perspective takes vfov, not hfov
-        glm::mat4 M_proj = glm::perspective(glm::radians(s.fov),
-                                            window.aspectRatio(), 0.1f, 2.0f);
+        float focal_len = static_cast<float>(window.width()) * 0.5f /
+                          tanf(glm::radians(s.hfov * 0.5f));
+        float vfov_radians = 2.0f * atanf(static_cast<float>(window.height()) *
+                                          0.5f / focal_len);
+        glm::mat4 M_proj =
+            glm::perspective(vfov_radians, window.aspectRatio(), 0.1f, 2.0f);
         s.M_proj = M_proj;
         shader.setMat4("proj", M_proj);
 

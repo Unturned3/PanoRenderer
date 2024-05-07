@@ -56,9 +56,9 @@ public:
         float roll = atan2f(s.M_rot[0][1], s.M_rot[1][1]);
         ImGui::Text("R Pan: %5.1f°, Tilt: %5.1f°, Roll: %4.1f°, FoV: %3.1f°",
                     glm::degrees(pan), glm::degrees(tilt), glm::degrees(roll),
-                    s.fov);
+                    s.hfov);
         ImGui::Text("E Pan: %5.1f°, Tilt: %5.1f°, Roll: %4.1f°, FoV: %4.1f°",
-                    s.pan, s.tilt, s.roll, s.fov);
+                    s.pan, s.tilt, s.roll, s.hfov);
 
         ImGui::Text("Average %.2f ms/frame (%.1f FPS)", 1000.0f / s.fps, s.fps);
         // ImGui::Text("Window focused: %s", ImGui::IsWindowFocused());
