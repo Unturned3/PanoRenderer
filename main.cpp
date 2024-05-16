@@ -62,6 +62,11 @@ int main(int argc, char** argv)
         out_file_path = argv[3];
     }
 
+    if (argc >= 3) {
+        std::string posesFilePath {argv[2]};
+        AppState::get().poses = cnpy::npy_load(posesFilePath);
+    }
+
     int fourcc = cv::VideoWriter::fourcc('a', 'v', 'c', '1');
     cv::VideoWriter videoWriter(out_file_path, fourcc, 30, {640, 480}, true);
     check(videoWriter.isOpened(), "Error opening cv::VideoWriter");
@@ -71,11 +76,6 @@ int main(int argc, char** argv)
     }
     else {
         pano = PanoContainer(Image(panoFilePath, false));
-    }
-
-    if (argc >= 3) {
-        std::string posesFilePath {argv[2]};
-        AppState::get().poses = cnpy::npy_load(posesFilePath);
     }
 
     if (glewInit() != GLEW_OK) throw std::runtime_error("GLEW init failed.");
