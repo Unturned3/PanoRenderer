@@ -14,6 +14,7 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <opencv2/opencv.hpp>
 
@@ -38,18 +39,31 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
 
 int main(int argc, char** argv)
 {
+    std::filesystem::path cwd = std::filesystem::current_path();
+    std::filesystem::path exe_path = cwd / argv[0];
+
+    exe_path = std::filesystem::absolute(exe_path);
+    exe_path = std::filesystem::canonical(exe_path);
+
+    std::filesystem::path proj_dir = exe_path.parent_path().parent_path();
+
 #ifdef USE_EGL
     HeadlessGLContext window(640, 480, "OpenGL Test");
 #else
     InteractiveGLContext window(640, 480, "OpenGL Test");
 #endif
 
-    std::string panoFilePath = argc < 2 ? "../images/p1.jpg" : argv[1];
+    std::string panoFilePath = argc < 2 ? proj_dir / "images/p1.jpg" : argv[1];
 
     PanoContainer pano;
 
+    std::string out_file_path = proj_dir / "build/out.mp4";
+    if (argc >= 4) {
+        out_file_path = argv[3];
+    }
+
     int fourcc = cv::VideoWriter::fourcc('a', 'v', 'c', '1');
-    cv::VideoWriter videoWriter("out.mp4", fourcc, 30, {640, 480}, true);
+    cv::VideoWriter videoWriter(out_file_path, fourcc, 30, {640, 480}, true);
     check(videoWriter.isOpened(), "Error opening cv::VideoWriter");
 
     if (panoFilePath.substr(panoFilePath.length() - 4) == ".mp4") {
@@ -107,13 +121,14 @@ int main(int argc, char** argv)
     VertexBuffer vb(vertices.data(),
                     static_cast<uint>(vertices.size() * sizeof(float)));
 
-    Shader shader(utils::path("shaders/vertex.glsl"),
-                  utils::path("shaders/frag.glsl"));
+    Shader shader(proj_dir / "shaders/vertex.glsl",
+                  proj_dir / "shaders/frag.glsl");
     shader.use();
     {
         // proportion of the missing sphere that's below the horizon
+        // NOTE: feature not used for now.
         double m = 1;
-        if (argc >= 4) m = std::stod(argv[3]);
+        // if (argc >= 4) m = std::stod(argv[3]);
         double u = (double)pano.width / 2 / (double)pano.height;
         float v_n = (float)(u * M_1_PI);
         float v_b = (float)(u / 2 + (1 - u) * m);
