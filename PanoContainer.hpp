@@ -31,7 +31,9 @@ public:
         AppState &s = AppState::get();
         int want_frames = static_cast<int>(s.poses.value().shape[0]);
 
-        std::uniform_int_distribution<int>uni(0, n_frames - want_frames);
+        /*  NOTE: Sometimes OpenCV fails to read the last few frames of a
+            video. We just avoid the last 30 frames to be safe. */
+        std::uniform_int_distribution<int>uni(0, n_frames - want_frames - 30);
         int random_integer = uni(rng);
         cap.set(cv::CAP_PROP_POS_FRAMES, random_integer);
 
