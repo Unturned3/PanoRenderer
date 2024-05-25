@@ -82,8 +82,6 @@ int main(int argc, char** argv)
 
     if (GLEW_KHR_debug)
         glDebugMessageCallback(glErrorCallback_, nullptr);
-    else
-        LOG("glDebugMessageCallback not available.");
 
 #ifndef USE_EGL
     GUI gui(window);
