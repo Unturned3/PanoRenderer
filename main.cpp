@@ -12,9 +12,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <filesystem>
 #include <string>
 #include <vector>
-#include <filesystem>
 
 #include <opencv2/opencv.hpp>
 
@@ -39,13 +39,32 @@ static void glErrorCallback_(GLenum source, GLenum type, GLuint id,
 
 int main(int argc, char** argv)
 {
-    std::filesystem::path cwd = std::filesystem::current_path();
-    std::filesystem::path exe_path = cwd / argv[0];
+    if (argc < 5) {
+        std::cerr << "Need 4 args: pano_path, traj_path, out_path, start_frame."
+                  << std::endl;
+        return 1;
+    }
 
+    std::filesystem::path cwd = std::filesystem::current_path();
+
+    std::filesystem::path exe_path = cwd / argv[0];
     exe_path = std::filesystem::absolute(exe_path);
     exe_path = std::filesystem::canonical(exe_path);
 
     std::filesystem::path proj_dir = exe_path.parent_path().parent_path();
+
+    std::string pano_path = argv[1];
+    std::string traj_path = argv[2];
+    std::string out_path = argv[3];
+    try {
+        AppState::get().start_frame = std::stoi(argv[4]);
+    }
+    catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+
+    AppState::get().poses = cnpy::npy_load(traj_path);
 
 #ifdef USE_EGL
     HeadlessGLContext window(640, 480, "OpenGL Test");
@@ -53,35 +72,21 @@ int main(int argc, char** argv)
     InteractiveGLContext window(640, 480, "OpenGL Test");
 #endif
 
-    std::string panoFilePath = argc < 2 ? proj_dir / "images/p1.jpg" : argv[1];
-
-    PanoContainer pano;
-
-    std::string out_file_path = proj_dir / "build/out.mp4";
-    if (argc >= 4) {
-        out_file_path = argv[3];
-    }
-
-    if (argc >= 3) {
-        std::string posesFilePath {argv[2]};
-        AppState::get().poses = cnpy::npy_load(posesFilePath);
-    }
-
     int fourcc = cv::VideoWriter::fourcc('a', 'v', 'c', '1');
-    cv::VideoWriter videoWriter(out_file_path, fourcc, 30, {640, 480}, true);
+    cv::VideoWriter videoWriter(out_path, fourcc, 30, {640, 480}, true);
     check(videoWriter.isOpened(), "Error opening cv::VideoWriter");
 
-    if (panoFilePath.substr(panoFilePath.length() - 4) == ".mp4") {
-        pano = PanoContainer(cv::VideoCapture(panoFilePath, cv::CAP_FFMPEG));
+    PanoContainer pano;
+    if (pano_path.substr(pano_path.length() - 4) == ".mp4") {
+        pano = PanoContainer(cv::VideoCapture(pano_path, cv::CAP_FFMPEG));
     }
     else {
-        pano = PanoContainer(Image(panoFilePath, false));
+        pano = PanoContainer(Image(pano_path, false));
     }
 
     if (glewInit() != GLEW_OK) throw std::runtime_error("GLEW init failed.");
 
-    if (GLEW_KHR_debug)
-        glDebugMessageCallback(glErrorCallback_, nullptr);
+    if (GLEW_KHR_debug) glDebugMessageCallback(glErrorCallback_, nullptr);
 
 #ifndef USE_EGL
     GUI gui(window);

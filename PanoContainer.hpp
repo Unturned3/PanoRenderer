@@ -1,9 +1,9 @@
 
-#include <random>
 #include <opencv2/opencv.hpp>
+#include <random>
+#include "AppState.hpp"
 #include "Image.hpp"
 #include "utils.hpp"
-#include "AppState.hpp"
 
 class PanoContainer {
 public:
@@ -24,19 +24,22 @@ public:
         width = (int)cap.get(cv::CAP_PROP_FRAME_WIDTH);
         height = (int)cap.get(cv::CAP_PROP_FRAME_HEIGHT);
 
-        n_frames = (int)cap.get(cv::CAP_PROP_FRAME_COUNT);
-        std::random_device rd;
-        std::mt19937 rng(rd());
+        /*  NOTE: Sometimes OpenCV fails to read the last few frames of a
+            video. We just avoid the last 30 frames to be safe. */
+        int total_frames = (int)cap.get(cv::CAP_PROP_FRAME_COUNT) - 30;
 
         AppState &s = AppState::get();
         int want_frames = static_cast<int>(s.poses.value().shape[0]);
+        int start_frame = s.start_frame;
 
-        /*  NOTE: Sometimes OpenCV fails to read the last few frames of a
-            video. We just avoid the last 30 frames to be safe. */
-        std::uniform_int_distribution<int>uni(0, n_frames - want_frames - 30);
-        int random_integer = uni(rng);
-        cap.set(cv::CAP_PROP_POS_FRAMES, random_integer);
+        if (start_frame + want_frames > total_frames) {
+            throw std::runtime_error(fmt::format(
+                "Error: requested {} frames starting at "
+                "frame {}, but only {} frames are available.",
+                want_frames, start_frame, total_frames));
+        }
 
+        cap.set(cv::CAP_PROP_POS_FRAMES, start_frame);
         nextFrame();
     }
 

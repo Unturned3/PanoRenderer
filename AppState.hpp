@@ -28,6 +28,7 @@ public:
     glm::vec3 up {0};
     glm::vec3 right {0};
 
+    int start_frame = 0;
     bool enable_trajectory = true;
     int pose_idx = 0;
     int frame_cnt = 0;
