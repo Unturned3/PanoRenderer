@@ -19,6 +19,11 @@ vec2 Cart2Spherical(vec3 p) {
     vec2 uv = vec2(atan(p.x, -p.z), asin(p.y));
     return uv * norm + vec2(0.5);
     */
+    /*
+        atan(p.x, -p.z): this is because we're trying to find the azimuth
+        angle between the point and the negative z-axis, in accordance with
+        the OpenGL convention that the camera faces negative z.
+    */
     float u = atan(p.x, -p.z) / (2 * pi);
     float v = asin(p.y) * v_norm + v_bias;
     float ua = u + 0.5;
